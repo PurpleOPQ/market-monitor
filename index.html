@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>市场监控仪表盘 · Market Monitor</title>
+<style>
+  :root{
+    --bg:#0f1419; --panel:#1a2029; --panel2:#212934; --line:#2c3540;
+    --text:#e6edf3; --muted:#8b98a5; --accent:#f0b429;
+    --pos-bg:rgba(46,160,67,.16); --neg-bg:rgba(212,105,30,.16);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    padding:24px 16px 80px;
+  }
+  header{max-width:1280px;margin:0 auto 16px}
+  h1{font-size:22px;margin:0 0 4px;letter-spacing:.3px}
+  .sub{color:var(--muted);font-size:13px}
+  .src{color:var(--muted);font-size:12px;margin-top:6px}
+  .status{max-width:1280px;margin:0 auto 14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .pill{font-size:12px;padding:6px 12px;border-radius:20px;border:1px solid var(--line);background:var(--panel2)}
+  .pill.live{border-color:#2ea043;color:#8ee6a8}
+  .pill.static{border-color:#d4691e;color:#f0b27a}
+  .refresh-btn{background:var(--accent);color:#1a1200;border:none;padding:7px 14px;border-radius:20px;
+    cursor:pointer;font-size:13px;font-weight:600}
+  .refresh-btn:hover{filter:brightness(1.08)}
+  .tabs{max-width:1280px;margin:0 auto 14px;display:flex;gap:8px;flex-wrap:wrap}
+  .tab{background:var(--panel2);border:1px solid var(--line);color:var(--muted);
+    padding:7px 14px;border-radius:20px;cursor:pointer;font-size:13px;transition:.15s}
+  .tab.active{background:var(--accent);color:#1a1200;border-color:var(--accent);font-weight:600}
+  .tab:hover{color:var(--text)}
+  .wrap{max-width:1280px;margin:0 auto;background:var(--panel);
+    border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  thead th{background:var(--panel2);color:var(--muted);font-weight:600;
+    padding:11px 8px;text-align:right;border-bottom:1px solid var(--line);
+    position:sticky;top:0;font-size:12px;white-space:nowrap}
+  thead th:first-child,thead th:nth-child(2){text-align:left}
+  tbody td{padding:9px 8px;text-align:right;border-bottom:1px solid var(--line);
+    white-space:nowrap;font-variant-numeric:tabular-nums}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr:hover{background:rgba(255,255,255,.025)}
+  .name{text-align:left;font-weight:600;cursor:pointer}
+  .name:hover{color:var(--accent)}
+  .ticker{text-align:left;color:var(--muted);font-size:11px;letter-spacing:.5px}
+  .live-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#2ea043;margin-left:5px;vertical-align:middle}
+  .close{font-weight:700;color:var(--text)}
+  .cell{cursor:pointer;border-radius:5px;padding:4px 7px;display:inline-block;
+    min-width:54px;transition:.12s;border:1px solid transparent}
+  .cell:hover{border-color:var(--accent);transform:translateY(-1px)}
+  .pos{color:#8ee6a8;background:var(--pos-bg)}
+  .neg{color:#f0b27a;background:var(--neg-bg)}
+  .flat{color:var(--muted)}
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(3px);
+    display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+  .overlay.show{display:flex}
+  .modal{background:var(--panel);border:1px solid var(--line);border-radius:14px;
+    max-width:480px;width:100%;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.5);
+    animation:pop .18s ease;position:relative}
+  @keyframes pop{from{transform:scale(.94);opacity:0}to{transform:scale(1);opacity:1}}
+  .modal h2{margin:0 0 2px;font-size:18px}
+  .modal .mt{color:var(--muted);font-size:12px;letter-spacing:.5px;margin-bottom:14px}
+  .stat-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+  .stat{background:var(--panel2);border:1px solid var(--line);border-radius:8px;
+    padding:6px 10px;font-size:12px;min-width:64px}
+  .stat .lbl{color:var(--muted);font-size:10px;display:block}
+  .stat .val{font-weight:700;font-size:14px}
+  .reason{font-size:14px;line-height:1.75;color:var(--text)}
+  .wc{color:var(--muted);font-size:11px;margin-top:12px;text-align:right}
+  .x{position:absolute;top:14px;right:16px;cursor:pointer;color:var(--muted);
+    font-size:22px;line-height:1;background:none;border:none}
+  .x:hover{color:var(--text)}
+  .disclaimer{max-width:1280px;margin:18px auto 0;color:var(--muted);font-size:11px;
+    line-height:1.6;border-top:1px solid var(--line);padding-top:12px}
+  .hint{color:var(--accent);font-size:12px}
+</style>
+</head>
+<body>
+<header>
+  <h1>市场监控仪表盘 <span style="color:var(--muted);font-weight:400;font-size:16px">Market Monitor</span></h1>
+  <div class="sub"><span class="hint">点击任意数字或资产名称 → 查看该资产变动的基本面原因（中文，约100字）</span></div>
+  <div class="src">数据来源：彭博 (Bloomberg) / moomoo 实时行情</div>
+</header>
+
+<div class="status">
+  <span class="pill" id="statusPill">加载中…</span>
+  <button class="refresh-btn" id="reloadBtn">↻ 重新加载</button>
+  <span style="color:var(--muted);font-size:11px">绿点 ● = 每日行情已接入</span>
+</div>
+
+<div class="tabs">
+  <div class="tab active" data-tab="assets">宏观 & 资产 Macro</div>
+  <div class="tab" data-tab="sectors">行业板块 Sectors</div>
+</div>
+
+<div class="wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>资产 Asset</th><th>代码</th><th>收盘</th>
+        <th>1天</th><th>1星期</th><th>1个月</th><th>1年</th><th>QTD</th><th>YTD</th>
+      </tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+  </table>
+</div>
+
+<div class="disclaimer">
+  ⚠️ 价格与涨跌幅取自第三方行情 API（每日收盘更新）；数据源未接入时回退至 12/06/2026 的彭博静态快照（橙色徽标提示）。美债收益率、Put/Call、垃圾债利差、VIX、比特币等指标数据源不提供，始终为静态快照。指数/现货行（标普、纳指、道指、黄金、原油、罗素2000）以对应 ETF 作代理：涨跌幅为实时，收盘价保留为可识别的指数点位。<br>
+  “基本面原因”为 AI 生成的解读性背景，仅供跟踪市场参考，<strong>不构成投资建议</strong>，未经实时核实，请以一手信源为准。
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <button class="x" id="closeBtn">×</button>
+    <h2 id="mTitle"></h2>
+    <div class="mt" id="mTicker"></div>
+    <div class="stat-row" id="mStats"></div>
+    <div class="reason" id="mReason"></div>
+    <div class="wc" id="mWc"></div>
+  </div>
+</div>
+
+<script>
+const COLS = [
+  {k:'d1', l:'1天'}, {k:'w1', l:'1星期'}, {k:'m1', l:'1个月'},
+  {k:'y1', l:'1年'},  {k:'qtd',l:'QTD'},  {k:'ytd',l:'YTD'}
+];
+
+// sym = moomoo symbol used by refresh.py to inject live data; null = always static.
+// pct=true → render with % sign; pct=false → render as raw level/bp change.
+const ASSETS = [
+  {n:'美元 USD', t:'DXY', sym:null, close:'99.75', pct:true,  d1:-0.1, w1:-0.3, m1:1.5, y1:1.9, qtd:-0.2, ytd:1.4,
+   why:"美元指数同比偏强，但近一周走软，因降息预期重新升温。美国经济韧性与相对较高的利率为美元提供支撑，但近期通胀数据降温、美联储表态偏鸽，削弱了短期动能。股市波动率平静使避险需求减弱。整体呈区间震荡，利差仍带来温和的结构性买盘。"},
+  {n:'2年美债', t:'2Y收益率', sym:null, close:'4.08', pct:false, d1:0.02, w1:-0.07, m1:0.09, y1:0.17, qtd:0.29, ytd:0.61,
+   why:"两年期收益率对美联储政策最敏感，本周因市场倾向更早降息而回落，但年内大幅上行，反映美联储“更高更久”。QTD的上升源于偏强的就业数据压制了激进降息押注。短端定价是政策预期最直接的标尺；本周小幅回落显示交易者在数据走软后重新加码降息概率。"},
+  {n:'10年美债', t:'10Y收益率', sym:null, close:'4.48', pct:false, d1:0.02, w1:-0.05, m1:0.02, y1:0.12, qtd:0.16, ytd:0.31,
+   why:"十年期收益率整体平稳，本周因避险买盘与数据走软略有下行。期限溢价与经济韧性使其年内维持高位，而庞大的国债发行限制了下行空间。相对2年期偏平的曲线表明市场认为经济能稳住、通胀不会失控——这是“软着陆”的收益率形态，而非衰退定价。"},
+  {n:'TLT 长债ETF', t:'TLT', sym:'US.TLT', close:'85.8', pct:true, d1:-0.2, w1:0.8, m1:0.9, y1:-1.6, qtd:-1.1, ytd:-1.6,
+   why:"长久期美债本周随收益率下行而上涨，但年内仍为负——久期在“更高更久”及期限溢价重定价下受挫。TLT本质是押注长端收益率下行的杠杆工具；近期反弹反映对降息预期的逢低买入，而QTD/YTD为负则显示高企的长端利率与国债供给带来的结构性逆风。"},
+  {n:'Put/Call比率', t:'P/C', sym:null, close:'0.58', pct:false, d1:-0.16, w1:-0.26, m1:-0.08, y1:-0.06, qtd:-0.32, ytd:-0.47,
+   why:"Put/Call比率下降至0.58，表明投资者买入看涨远多于看跌——风险偏好高、情绪偏乐观。本周与QTD的明显回落与股市上涨、VIX下行一致。历史上极低读数可作为逆向警示，提示市场过度乐观、易出现回调；但目前它确认了强烈的看多情绪与对上行敞口的需求。"},
+  {n:'垃圾债利差', t:'HY利差', sym:null, close:'2.7', pct:false, d1:-0.05, w1:0.01, m1:-0.02, y1:-0.40, qtd:-0.16, ytd:0.00,
+   why:"高收益债利差约2.7%处于历史低位，显示信用压力很小、风险偏好强。近一年明显收窄（-0.40）反映金融条件宽松、市场相信违约率在稳健增长下保持低位。利差过窄虽支撑股市，但一旦增长不及预期则缓冲极薄——是关键的“煤矿金丝雀”。本周与年内基本持平，说明信用市场平静无忧。"},
+  {n:'标普500', t:'SPX', sym:'US.SPY', close:'7431', pct:true, d1:0.5, w1:0.6, m1:0.4, y1:22.9, qtd:13.8, ytd:8.6,
+   why:"标普500年内大涨22.9%，受益于盈利韧性、AI驱动的科技领涨及降息乐观预期。近一周涨幅广泛但温和。强劲的QTD反映风险偏好回归：波动率下降、信用利差收窄、仓位偏多。需警惕集中度风险——年内涨幅很大程度依赖大型科技与半导体，尽管随小盘股参与，市场广度已有改善。"},
+  {n:'纳指', t:'NDX', sym:'US.QQQ', close:'25889', pct:true, d1:0.3, w1:0.7, m1:-0.8, y1:31.7, qtd:19.9, ytd:11.4,
+   why:"纳指年内飙升31.7%，由AI/半导体热潮与大型科技盈利驱动。近一个月小幅回落，反映强势后的获利了结与轮动，但QTD依然亮眼。成长/科技对利率高度敏感，近期长端收益率回落构成利好。过去一个月“七巨头”的回调，显示领涨力量正从最拥挤的大型科技股向外扩散。"},
+  {n:'道指', t:'DJIA', sym:'US.DIA', close:'51202', pct:true, d1:0.7, w1:0.7, m1:2.9, y1:19.2, qtd:10.5, ytd:6.5,
+   why:"道指稳步上涨，反映周期与价值类蓝筹（银行、工业、国防）的强势。其近一个月2.9%领先科技指数，显示随软着陆叙事确立，资金向价值与经济敏感型标的轮动。道指成分集中度较低，是广义经济信心的标尺；稳健的QTD表明涨势已扩散至科技巨头之外。"},
+  {n:'黄金', t:'XAU', sym:'US.GLD', close:'4219', pct:true, d1:0.2, w1:-2.5, m1:-10.5, y1:24.6, qtd:-9.6, ytd:-2.3,
+   why:"黄金同比仍大涨24.6%，受央行购金与此前地缘对冲支撑，但过去一个月深度回调（-10.5%）。回落源于美元走强、前期实际利率上行、股市波动率骤降致避险需求减弱以及向股票的风险轮动。经历抛物线式上涨后，黄金正在盘整；QTD的急跌更像均值回归的平仓，而非长期买盘逻辑改变。"},
+  {n:'WTI原油', t:'WTI', sym:'US.USO', close:'84.9', pct:true, d1:-3.2, w1:-6.3, m1:-16.9, y1:24.8, qtd:-16.3, ytd:47.8,
+   why:"原油近一周、一个月大幅下跌，因需求增长担忧与供给上升；但仍是年内最强（YTD +47.8%），此前受供给冲击与地缘风险溢价推动。近期急跌或反映供给担忧缓解或OPEC+增产。油价是关键的通胀摆动因素——此次回落具有通缩效应，支撑降息预期，尽管年内绝对水平仍偏高。"},
+  {n:'VIX 波动率', t:'VIX', sym:null, close:'17.7', pct:true, d1:-9.1, w1:-17.8, m1:-1.7, y1:-1.9, qtd:-30.0, ytd:18.3,
+   why:"VIX本周（-17.8%）与QTD（-30%）骤降，随股市上涨、恐慌消散——典型的风险偏好信号。约17.7处于偏乐观水平。YTD为正说明波动率仍高于年初。低VIX支撑股市继续上行，但与极低的Put/Call比率叠加，暗示拥挤的乐观情绪，一旦出现利空可能迅速逆转。"},
+  {n:'IGV 软件ETF', t:'IGV', sym:'US.IGV', close:'90.7', pct:false, d1:-0.22, w1:-5.15, m1:1.26, y1:-16.34, qtd:0.13, ytd:-14.99,
+   why:"软件板块明显跑输大科技，年内（-15）与本周大跌。在AI硬件/芯片飙升之际，应用软件面临利润率压力、AI颠覆担忧（AI是否会蚕食SaaS席位）以及从高估值成长向芯片与价值的轮动。本周下跌正反映这种分化——资金集中流向AI的“卖铲人”（芯片），而非软件终端产品。"},
+  {n:'罗素2000', t:'RUT', sym:'US.IWM', close:'2944.0', pct:true, d1:0.8, w1:3.9, m1:3.6, y1:37.6, qtd:17.9, ytd:18.6,
+   why:"小盘股本周大涨3.9%、年内领涨18.6%——市场广度扩散、风险偏好改善的强信号。小盘股对利率敏感（浮动债务更多）且偏内需，故收益率下行与软着陆乐观最受益。同比37.6%的涨幅显示投资者押注扩张将从大型科技扩散至更广泛的经济。"},
+  {n:'比特币', t:'BTC', sym:null, close:'63418.5', pct:true, d1:0.1, w1:2.9, m1:-21.4, y1:-40.2, qtd:-7.0, ytd:-27.6,
+   why:"比特币年内（-40.2%）与一个月（-21.4%）大幅下跌，尽管本周小幅反弹。深度回撤反映加密资产自身的去风险、减半后的疲态、ETF资金流出与投机杠杆下降。值得注意的是它与股市涨势背离——在VIX平静、信用利差收窄之际，这种背离更像加密自身压力（清算、监管或流动性担忧），而非广义宏观恐慌。"},
+];
+
+const SECTORS = [
+  {n:'通讯服务', t:'IXP', sym:'US.IXP', close:'119.2', pct:true, d1:0.4, w1:0.1, m1:-3.2, y1:9.9, qtd:3.8, ytd:-1.7,
+   why:"通讯服务跑输，年内小幅为负，受广告支出敏感性与近一个月回调（-3.2%）拖累。该板块混合了大型平台与电信；近期疲软反映资金撤出拥挤的成长股。年内涨幅温和、落后大盘，显示本季投资者偏好AI硬件与周期股，而非广告驱动的媒体。"},
+  {n:'非必需消费', t:'XLY', sym:'US.XLY', close:'116.6', pct:true, d1:0.3, w1:1.5, m1:-1.4, y1:9.1, qtd:7.0, ytd:-2.4,
+   why:"非必需消费年内为负（-2.4%），尽管本周尚可，反映消费者面对高利率与预算收紧而谨慎。该板块对利率与信心敏感；一个月回落显示消费疲态。稳健的QTD表明随降息预期与就业市场韧性，大额与旅游消费有所回暖，但板块仍落后于防御股与芯片。"},
+  {n:'必需消费', t:'XLP', sym:'US.XLP', close:'85.8', pct:true, d1:0.6, w1:2.9, m1:1.6, y1:4.7, qtd:4.7, ytd:10.5,
+   why:"必需消费年内跑赢（+10.5%）且本周走强——在风险偏好高涨的行情中尤为突出。这种防御性买盘表明部分资金在对冲，轮入现金流稳定、有定价权的标的。降息临近时，稳定需求与股息吸引力支撑必需消费。其在上涨市中的强势，暗示一种“杠铃”策略：既追逐AI上行，又把资金停泊在防御股。"},
+  {n:'能源', t:'XLE', sym:'US.XLE', close:'57.6', pct:true, d1:0.8, w1:-0.2, m1:0.0, y1:32.9, qtd:-6.1, ytd:28.7,
+   why:"能源股年内强劲（+28.7%），受此前高油价与自律的资本回报推动。但QTD为负（-6.1%）跟随近期原油下滑。这种背离——本周股价持平而油价下跌——显示回购、股息与价值吸引力为股价提供缓冲，即便商品价格降温。能源仍是价值/通胀对冲的配置。"},
+  {n:'银行', t:'KBWB', sym:'US.KBWB', close:'92.6', pct:true, d1:1.7, w1:3.4, m1:9.4, y1:38.3, qtd:17.0, ytd:9.9,
+   why:"银行大涨——一个月+9.4%、年内+38.3%——受益于曲线变陡、净息差强劲、衰退担忧缓解，以及监管放松与并购回暖的预期。信用利差收窄预示贷款损失温和。银行强势是对经济与软着陆的信心投票；其领涨支撑了由价值主导的市场广度扩散。"},
+  {n:'公共事业', t:'XLU', sym:'US.XLU', close:'44.5', pct:true, d1:1.1, w1:0.4, m1:-1.5, y1:8.8, qtd:-3.0, ytd:4.3,
+   why:"公用事业温和上涨，部分受AI驱动的数据中心用电激增提振——这是新的结构性顺风。但QTD为负反映其利率敏感性：作为“类债券”资产，当收益率高企、资金偏好成长时表现落后。整体呈现用电增长故事与高企固收收益率竞争之间的平衡。"},
+  {n:'REITs 房地产', t:'IYR', sym:'US.IYR', close:'104.4', pct:true, d1:0.9, w1:1.8, m1:1.5, y1:8.8, qtd:10.4, ytd:11.2,
+   why:"REITs稳健回升（YTD +11.2%），随长端收益率下行，压制地产估值的利率压力缓解。强劲的QTD反映市场预期利率周期已见顶——REITs因债务负担与股息属性而对利率高度敏感。稳步攀升显示投资者为低利率环境重新布局，且商业地产基本面趋稳。"},
+  {n:'科技', t:'XLK', sym:'US.XLK', close:'184.8', pct:true, d1:0.9, w1:2.5, m1:5.5, y1:52.4, qtd:39.1, ytd:28.4,
+   why:"科技是年内最强引擎（+52.4%），由AI基建、稳健盈利与强大的现金创造驱动。卓越的QTD（+39.1%）反映对AI基础设施与软件的旺盛需求。长端收益率回落进一步支撑长久期成长估值。风险在于集中度与高估值——但动能、基本面与AI资本开支的长期周期持续吸引资金流入。"},
+  {n:'医疗', t:'XLV', sym:'US.XLV', close:'153.8', pct:true, d1:-0.2, w1:0.5, m1:5.5, y1:12.4, qtd:4.9, ytd:-0.6,
+   why:"医疗年内大致持平（-0.6%），但近一个月反弹（+5.5%），暗示防御性轮动与低位买入。政策/定价不确定性与疲软的生物科技情绪压制了此前涨幅。近期反弹显示投资者增配防御、估值合理的敞口以对冲拥挤的科技交易，同时药物管线与人口结构提供长期支撑。"},
+  {n:'国防', t:'ITA', sym:'US.ITA', close:'233.8', pct:true, d1:-1.0, w1:1.9, m1:3.7, y1:30.3, qtd:6.9, ytd:8.9,
+   why:"国防/航空航天强劲（同比+30.3%），受地缘紧张、全球军费上升与商用航空复苏推动。当日小跌为轻微获利了结。稳定的订单储备与政府支出给予板块盈利可见性，使其既是地缘对冲，也是独立于消费周期的结构性成长故事。"},
+  {n:'保险', t:'IAK', sym:'US.IAK', close:'135.6', pct:true, d1:0.7, w1:1.5, m1:3.2, y1:1.6, qtd:5.7, ytd:-0.4,
+   why:"保险股年内大致持平，但近期走强（一个月+3.2%）。较高的投资收益率提升浮存金收益，定价自律支撑利润率。同比偏弱或反映巨灾损失担忧或准备金调整。近期上行与金融/价值轮动一致，并受益于其债券组合上较高的再投资利率。"},
+  {n:'芯片', t:'SOXX', sym:'US.SOXX', close:'596.3', pct:true, d1:1.6, w1:10.5, m1:15.6, y1:162.8, qtd:81.4, ytd:98.0,
+   why:"半导体是市场的震中——同比惊人地上涨162.8%，仅本周就+10.5%。AI算力热潮驱动对GPU与先进芯片的旺盛需求，定价权与订单储备创纪录。这是最纯粹的AI“卖铲人”交易。如此抛物线式涨幅蕴含急跌风险，但结构性资本开支超级周期与盈利超预期持续助推行情。"},
+  {n:'罗素1000价值', t:'IWD', sym:'US.IWD', close:'242.1', pct:true, d1:1.0, w1:2.4, m1:3.4, y1:26.3, qtd:13.3, ytd:15.1,
+   why:"价值股近期跑赢成长（本周+2.4%、YTD +15.1%）——重要的轮动信号。银行、能源与工业领涨，因软着陆叙事、曲线变陡与广度扩散利好更便宜的周期股。价值本周对成长的领先，显示投资者正从拥挤的大型科技分散，转向经济敏感、估值合理的标的。"},
+  {n:'罗素1000成长', t:'IWF', sym:'US.IWF', close:'121.6', pct:true, d1:0.0, w1:-0.9, m1:-1.4, y1:18.4, qtd:14.1, ytd:2.8,
+   why:"成长股本周（-0.9%）与一个月跑输价值，显示资金撤出拥挤的高估值标的——尽管受AI/科技强势支撑，年内仍为正。偏弱的YTD（+2.8%）相对价值凸显成长股已变得多么集中与头重脚轻。回落反映大型科技的获利了结，以及向更广泛、更便宜板块的转移。"},
+  {n:'前7大科技', t:'MAG7', sym:'US.MAGS', close:'32101.8', pct:true, d1:-0.1, w1:-2.5, m1:-6.1, y1:25.8, qtd:12.5, ytd:-1.1,
+   why:"大型科技领涨股本月大幅回落（-6.1%），YTD转为小幅为负（-1.1%）——其主导地位的显著逆转。资金正轮入芯片、小盘、价值与防御股，投资者削减最拥挤的交易。尽管长期AI基本面依旧稳固，但高企的估值与集中度风险正促成市场领涨力量的健康扩散。"},
+  {n:'标普等权指数', t:'RSP', sym:'US.RSP', close:'211.7', pct:true, d1:0.9, w1:1.8, m1:3.8, y1:17.9, qtd:10.3, ytd:10.5,
+   why:"等权标普（YTD +10.5%）如今跑赢部分市值加权的成长板块——市场广度改善的有力证据。当RSP能跟上甚至超越大盘指数时，说明“平均个股”在参与，而非仅靠大型科技。这种健康的广度扩散，连同小盘与价值的强势，预示一轮更持久、集中度更低的涨势。"},
+];
+
+function fmt(v, pct){
+  if(v===0) return pct ? '0.0%' : '0.00';
+  const sign = v>0 ? '+' : '';
+  return pct ? sign+v.toFixed(1)+'%' : sign+v.toFixed(2);
+}
+function cls(v){ return v>0?'pos':(v<0?'neg':'flat'); }
+
+let current = [];
+const tbody = document.getElementById('tbody');
+
+function render(rows){
+  current = rows;
+  tbody.innerHTML = rows.map((r,i)=>{
+    const cells = COLS.map(c=>{
+      const v = r[c.k];
+      return `<td><span class="cell ${cls(v)}" data-i="${i}">${fmt(v, r.pct)}</span></td>`;
+    }).join('');
+    const dot = r._live ? '<span class="live-dot" title="实时价格"></span>' : '';
+    return `<tr>
+      <td class="name" data-i="${i}">${r.n}${dot}</td>
+      <td class="ticker">${r.t}</td>
+      <td class="close">${r.close}</td>
+      ${cells}
+    </tr>`;
+  }).join('');
+}
+
+const overlay = document.getElementById('overlay');
+function openModal(r){
+  document.getElementById('mTitle').textContent = r.n;
+  document.getElementById('mTicker').textContent = `${r.t} · 收盘 ${r.close}` + (r._live?' · 实时':'');
+  document.getElementById('mStats').innerHTML = COLS.map(c=>{
+    const v=r[c.k];
+    const color = v>0?'#8ee6a8':(v<0?'#f0b27a':'#8b98a5');
+    return `<div class="stat"><span class="lbl">${c.l}</span>
+      <span class="val" style="color:${color}">${fmt(v,r.pct)}</span></div>`;
+  }).join('');
+  document.getElementById('mReason').textContent = r.why;
+  const chars = r.why.replace(/\s/g,'').length;
+  document.getElementById('mWc').textContent = `${chars} 字 · AI 生成解读`;
+  overlay.classList.add('show');
+}
+function closeModal(){ overlay.classList.remove('show'); }
+
+tbody.addEventListener('click', e=>{
+  const el = e.target.closest('[data-i]');
+  if(!el) return;
+  openModal(current[+el.dataset.i]);
+});
+document.getElementById('closeBtn').addEventListener('click', closeModal);
+overlay.addEventListener('click', e=>{ if(e.target===overlay) closeModal(); });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeModal(); });
+
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    render(t.dataset.tab==='assets' ? ASSETS : SECTORS);
+  });
+});
+
+// ---- live data: overlay data.json (written by refresh.py) onto static rows ----
+function applyLive(live){
+  const map = {};
+  (live.quotes||[]).forEach(q=> map[q.sym]=q);
+  [...ASSETS, ...SECTORS].forEach(r=>{
+    if(r.sym && map[r.sym]){
+      const q = map[r.sym];
+      if(q.close!=null) r.close = String(q.close);
+      ['d1','w1','m1','y1','qtd','ytd'].forEach(k=>{ if(q[k]!=null) r[k]=q[k]; });
+      r._live = true;
+    }
+  });
+}
+function setStatus(live){
+  const pill = document.getElementById('statusPill');
+  if(live){
+    const n = (live.quotes||[]).length;
+    pill.className = 'pill live';
+    pill.textContent = `● ${live.source||'每日行情'} · 更新于 ${live.as_of||''} · ${n} 个标的`;
+  }else{
+    pill.className = 'pill static';
+    pill.textContent = '○ 静态快照 (12/06/2026) · 数据源未接入';
+  }
+}
+async function boot(){
+  let live=null;
+  try{
+    const res = await fetch('data.json?_='+Date.now(), {cache:'no-store'});
+    if(res.ok) live = await res.json();
+  }catch(e){ /* file:// or offline → fallback */ }
+  if(live){ applyLive(live); }
+  setStatus(live);
+  render(ASSETS);
+}
+document.getElementById('reloadBtn').addEventListener('click', ()=>location.reload());
+boot();
+</script>
+</body>
+</html>

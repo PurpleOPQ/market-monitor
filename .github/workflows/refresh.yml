@@ -1,0 +1,41 @@
+name: Refresh market data
+
+on:
+  schedule:
+    # 22:10 UTC on weekdays — ~after US market close (EOD data finalized).
+    - cron: "10 22 * * 1-5"
+  workflow_dispatch: {}   # lets you run it manually from the Actions tab
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Fetch end-of-day quotes
+        env:
+          TWELVEDATA_API_KEY: ${{ secrets.TWELVEDATA_API_KEY }}
+        run: python3 refresh.py
+
+      - name: Commit data.json if changed
+        run: |
+          git config user.name  "market-monitor-bot"
+          git config user.email "actions@users.noreply.github.com"
+          if ! git diff --quiet -- data.json; then
+            git add data.json
+            git commit -m "data: refresh $(date -u +%Y-%m-%d)"
+            git push
+          else
+            echo "No change in data.json"
+          fi
