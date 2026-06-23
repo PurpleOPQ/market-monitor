@@ -186,6 +186,9 @@
   .gate-box input:focus{border-color:var(--orange)}
   .gate-err{color:#ff6a6a; font-size:12px; margin-top:12px; height:14px; opacity:0}
   .gate-err.show{opacity:1}
+  /* viewer role: hide all editing affordances */
+  body.viewer .editor-only{display:none !important}
+  body.viewer .del{display:none !important}
 
   .empty{color:var(--ink-3); text-align:center; padding:80px 20px}
   .toast{
@@ -224,13 +227,14 @@
   </div>
 
   <div class="toolbar">
-    <div class="brand"><b>moomoo</b> 植入内容工作台<small>选择页面 · 编辑内容 · 导出 PDF　·　<span style="color:var(--orange)">build 2026-06-23b ✓编辑已修复</span></small></div>
+    <div class="brand"><b>moomoo</b> 植入内容工作台<small>选择页面 · 编辑内容 · 导出 PDF　·　<span style="color:var(--orange)">build 2026-06-23c · 角色权限</span></small></div>
     <div class="spacer"></div>
     <span class="count-pill">已选 <b id="selCount">0</b> / <span id="totalCount">0</span> 页</span>
-    <button class="btn ghost" id="btnEdit">✏️ 编辑模式</button>
-    <button class="btn ghost" id="btnExportJson">⬇️ 导出内容</button>
-    <button class="btn ghost" id="btnReset" title="清除本地修改，恢复到仓库已发布版本">↺ 重置</button>
+    <button class="btn ghost editor-only" id="btnEdit">✏️ 编辑模式</button>
+    <button class="btn ghost editor-only" id="btnExportJson">⬇️ 导出内容</button>
+    <button class="btn ghost editor-only" id="btnReset" title="清除本地修改，恢复到仓库已发布版本">↺ 重置</button>
     <button class="btn primary" id="btnPdf">🖨️ 导出 PDF</button>
+    <span class="mini" id="btnLogout" title="切换登录身份" style="margin-left:4px">退出</span>
   </div>
 
   <div class="main">
@@ -240,7 +244,7 @@
         <span><span class="mini" id="selAll">全选</span> · <span class="mini" id="selNone">全不选</span></span>
       </div>
       <div class="page-list" id="pageList"></div>
-      <div style="padding:0 14px 14px">
+      <div style="padding:0 14px 14px" class="editor-only">
         <button class="btn ghost add-page" id="btnAdd">＋ 新增功能页</button>
       </div>
     </aside>
@@ -255,15 +259,25 @@
 
 <script src="content.js"></script>
 <script>
-/* ===== 访问密码（改这里即可）===== */
-const ACCESS_PASSWORD = 'moomoo2026';
+/* ===== 访问密码（改这里即可）=====
+   EDITOR_PASSWORD：只给你自己，可编辑/新增/导出内容
+   VIEWER_PASSWORD：发给同事，只能勾选页面 + 导出 PDF，无法编辑 */
+const EDITOR_PASSWORD = 'moomoo-edit-2026';
+const VIEWER_PASSWORD = 'moomoo2026';
 /* ================================== */
-const LS_GATE = 'moomoo_wb_gate_v1';
+const LS_ROLE = 'moomoo_wb_role_v1';
+let role = 'viewer';
+function applyRole(r){ role = r; document.body.classList.toggle('viewer', r!=='editor'); }
+
 function showGate(){
   const gate=document.getElementById('gate'), pw=document.getElementById('gatePw'), err=document.getElementById('gateErr');
-  if(localStorage.getItem(LS_GATE)===ACCESS_PASSWORD){ gate.classList.add('hidden'); start(); return; }
+  const saved = localStorage.getItem(LS_ROLE);
+  if(saved==='editor' || saved==='viewer'){ applyRole(saved); gate.classList.add('hidden'); start(); return; }
   const tryUnlock=()=>{
-    if(pw.value===ACCESS_PASSWORD){ localStorage.setItem(LS_GATE, ACCESS_PASSWORD); gate.classList.add('hidden'); start(); }
+    let r = null;
+    if(pw.value===EDITOR_PASSWORD) r='editor';
+    else if(pw.value===VIEWER_PASSWORD) r='viewer';
+    if(r){ localStorage.setItem(LS_ROLE, r); applyRole(r); gate.classList.add('hidden'); start(); }
     else { err.classList.add('show'); pw.select(); }
   };
   document.getElementById('gateBtn').addEventListener('click', tryUnlock);
@@ -542,6 +556,7 @@ document.getElementById('btnAdd').addEventListener('click', ()=>{
 
 /* ---------- toolbar actions ---------- */
 function setEditing(v){
+  if(role!=='editor') v=false;   // viewers can never enter edit mode
   editing = v;
   document.body.classList.toggle('editing', v);
   const b = document.getElementById('btnEdit');
@@ -569,6 +584,12 @@ document.getElementById('btnReset').addEventListener('click', ()=>{
   if(!confirm('清除本地所有修改，恢复到仓库已发布的 content.json？')) return;
   localStorage.removeItem(LS_CONTENT); localStorage.removeItem(LS_SELECT);
   content=null; selected=null; load();
+});
+
+/* ---------- logout / switch identity ---------- */
+document.getElementById('btnLogout').addEventListener('click', ()=>{
+  localStorage.removeItem(LS_ROLE);
+  location.reload();
 });
 
 /* ---------- startup (behind password gate) ---------- */
