@@ -358,7 +358,7 @@ function toggleSel(id){
 }
 
 /* ---------- slide rendering ---------- */
-function ed(path){ return `data-edit data-path="${path}"`; }
+function ed(path){ return `data-edit data-path="${path}"${editing?' contenteditable="true"':''}`; }
 
 function renderCover(p, idx){
   const imgs = ['assets/cover-0.png','assets/cover-2.png','assets/cover-1.png'];
@@ -546,7 +546,7 @@ function setEditing(v){
   document.body.classList.toggle('editing', v);
   const b = document.getElementById('btnEdit');
   b.classList.toggle('on', v); b.textContent = v?'✓ 编辑中（点击退出）':'✏️ 编辑模式';
-  document.querySelectorAll('[data-edit]').forEach(el=>el.contentEditable = v);
+  render();
 }
 document.getElementById('btnEdit').addEventListener('click', ()=>setEditing(!editing));
 document.getElementById('selAll').addEventListener('click', ()=>{ selected=new Set(content.pages.map(p=>p.id)); persistSel(); render(); });
