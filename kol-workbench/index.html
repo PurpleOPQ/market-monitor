@@ -208,6 +208,8 @@
     .canvas-wrap{overflow:visible; padding:0; background:#fff}
     .canvas{max-width:none; margin:0; gap:0}
     .slide-frame{box-shadow:none; border-radius:0; width:1280px !important; height:720px !important; page-break-after:always; break-after:page}
+    /* last printed page must NOT have a trailing break, or an extra blank page appears */
+    .slide-frame.print-last{page-break-after:auto !important; break-after:auto !important}
     .slide-frame.unsel{display:none !important}
     .slide-frame .badge{display:none !important}
     .slide{transform:none !important}
@@ -227,7 +229,7 @@
   </div>
 
   <div class="toolbar">
-    <div class="brand"><b>moomoo</b> 植入内容工作台<small>选择页面 · 编辑内容 · 导出 PDF　·　<span style="color:var(--orange)">build 2026-06-23c · 角色权限</span></small></div>
+    <div class="brand"><b>moomoo</b> 植入内容工作台<small>选择页面 · 编辑内容 · 导出 PDF　·　<span style="color:var(--orange)">build 2026-06-23d · 修复尾页空白</span></small></div>
     <div class="spacer"></div>
     <span class="count-pill">已选 <b id="selCount">0</b> / <span id="totalCount">0</span> 页</span>
     <button class="btn ghost editor-only" id="btnEdit">✏️ 编辑模式</button>
@@ -569,7 +571,7 @@ document.getElementById('selNone').addEventListener('click', ()=>{ selected=new 
 document.getElementById('btnPdf').addEventListener('click', ()=>{
   if(![...selected].filter(id=>pageById(id)).length){ toast('请先勾选至少一页'); return; }
   if(editing) setEditing(false);
-  setTimeout(()=>window.print(), 120);
+  setTimeout(()=>{ markPrintLast(); window.print(); }, 120);
 });
 document.getElementById('btnExportJson').addEventListener('click', ()=>{
   const js = '// 工作台内容源文件（可视化编辑后导出；覆盖同名文件并提交即可对所有人生效）\n'
@@ -585,6 +587,16 @@ document.getElementById('btnReset').addEventListener('click', ()=>{
   localStorage.removeItem(LS_CONTENT); localStorage.removeItem(LS_SELECT);
   content=null; selected=null; load();
 });
+
+/* ---------- print: drop trailing break on last page (avoid blank last page) ---------- */
+function markPrintLast(){
+  document.querySelectorAll('.slide-frame.print-last').forEach(f=>f.classList.remove('print-last'));
+  const vis = [...document.querySelectorAll('.slide-frame')].filter(f=>!f.classList.contains('unsel'));
+  if(vis.length) vis[vis.length-1].classList.add('print-last');
+}
+function clearPrintLast(){ document.querySelectorAll('.slide-frame.print-last').forEach(f=>f.classList.remove('print-last')); }
+window.addEventListener('beforeprint', markPrintLast);
+window.addEventListener('afterprint', clearPrintLast);
 
 /* ---------- logout / switch identity ---------- */
 document.getElementById('btnLogout').addEventListener('click', ()=>{
