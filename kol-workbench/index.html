@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>moomoo 植入内容工作台</title>
+<style>
+  :root{
+    --bg:#070708; --panel:#0f0f11; --panel-2:#151518; --line:#26262b;
+    --ink:#f5f5f7; --ink-2:#b9b9c0; --ink-3:#7d7d86;
+    --orange:#ff6a13; --orange-soft:rgba(255,106,19,.14);
+    --slide-bg:#0a0a0b;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{
+    background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    display:flex; flex-direction:column; height:100vh; overflow:hidden;
+  }
+
+  /* ---------- Toolbar ---------- */
+  .toolbar{
+    flex:0 0 auto; display:flex; align-items:center; gap:14px;
+    padding:12px 18px; border-bottom:1px solid var(--line); background:var(--panel);
+  }
+  .brand{font-weight:800; letter-spacing:.5px; font-size:18px}
+  .brand b{color:var(--orange)}
+  .brand small{display:block; font-size:11px; color:var(--ink-3); font-weight:500; letter-spacing:.3px}
+  .toolbar .spacer{flex:1}
+  .btn{
+    appearance:none; border:1px solid var(--line); background:var(--panel-2); color:var(--ink);
+    padding:8px 14px; border-radius:8px; font-size:13px; cursor:pointer; font-weight:600;
+    display:inline-flex; align-items:center; gap:7px; transition:.15s;
+  }
+  .btn:hover{border-color:#3a3a42; background:#1c1c20}
+  .btn.primary{background:var(--orange); border-color:var(--orange); color:#1a0d00}
+  .btn.primary:hover{background:#ff7e33}
+  .btn.ghost{background:transparent}
+  .btn.on{background:var(--orange-soft); border-color:var(--orange); color:var(--orange)}
+  .count-pill{font-size:12px; color:var(--ink-3)}
+  .count-pill b{color:var(--ink)}
+
+  /* ---------- Layout ---------- */
+  .main{flex:1; display:flex; min-height:0}
+  .sidebar{
+    flex:0 0 290px; border-right:1px solid var(--line); background:var(--panel);
+    display:flex; flex-direction:column; min-height:0;
+  }
+  .sidebar-head{padding:12px 14px 8px; display:flex; align-items:center; justify-content:space-between}
+  .sidebar-head h3{margin:0; font-size:12px; letter-spacing:1px; color:var(--ink-3); text-transform:uppercase}
+  .mini{font-size:11px; color:var(--orange); cursor:pointer; user-select:none}
+  .mini:hover{text-decoration:underline}
+  .page-list{flex:1; overflow:auto; padding:4px 10px 14px}
+  .row{
+    display:flex; align-items:center; gap:9px; padding:9px 10px; margin:4px 0;
+    border:1px solid var(--line); border-radius:9px; background:var(--panel-2);
+    cursor:pointer; transition:.12s; user-select:none;
+  }
+  .row:hover{border-color:#3a3a42}
+  .row.sel{border-color:var(--orange); background:var(--orange-soft)}
+  .row.dragging{opacity:.4}
+  .row .grip{color:var(--ink-3); cursor:grab; font-size:14px; line-height:1}
+  .row input[type=checkbox]{width:16px; height:16px; accent-color:var(--orange); cursor:pointer}
+  .row .meta{flex:1; min-width:0}
+  .row .meta .t{font-size:13px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .row .meta .s{font-size:11px; color:var(--ink-3)}
+  .row .del{color:var(--ink-3); font-size:15px; padding:2px 5px; border-radius:6px; opacity:0}
+  .row:hover .del{opacity:1}
+  .row .del:hover{color:#ff5a5a; background:#2a1414}
+  .add-page{margin:6px 4px 0; width:calc(100% - 8px); justify-content:center}
+
+  /* ---------- Canvas ---------- */
+  .canvas-wrap{flex:1; overflow:auto; padding:26px; background:#020203}
+  .canvas{max-width:1180px; margin:0 auto; display:flex; flex-direction:column; gap:26px}
+  .slide-frame{position:relative; width:100%; border-radius:12px; overflow:hidden; box-shadow:0 12px 40px rgba(0,0,0,.55)}
+  .slide-frame.unsel{opacity:.32; filter:grayscale(.4)}
+  .slide-frame .badge{
+    position:absolute; top:10px; right:10px; z-index:5; font-size:11px; font-weight:700;
+    background:rgba(0,0,0,.6); border:1px solid var(--line); color:var(--ink-2);
+    padding:4px 9px; border-radius:20px; backdrop-filter:blur(4px);
+  }
+  .slide-frame.unsel .badge{color:#ff8c5a; border-color:#5a3a28}
+
+  /* ---------- Slide (fixed 1280x720, scaled by JS) ---------- */
+  .slide{
+    width:1280px; height:720px; transform-origin:top left; position:relative;
+    background:var(--slide-bg); color:#fff; overflow:hidden;
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  }
+  .slide *{box-sizing:border-box}
+  .topbar{
+    position:absolute; top:0; left:0; right:0; height:54px; display:flex; align-items:center;
+    gap:14px; padding:0 40px; border-bottom:1px solid rgba(255,255,255,.06); z-index:3;
+  }
+  .topbar .logo{font-weight:800; font-size:18px; color:var(--orange); letter-spacing:.5px}
+  .topbar .crumb{font-size:12px; letter-spacing:2px; color:#6f6f78; text-transform:uppercase}
+  .topbar .crumb .sep{margin:0 8px; color:#3a3a42}
+
+  /* editable affordance */
+  [data-edit]{outline:none; border-radius:4px; transition:box-shadow .12s}
+  body.editing [data-edit]{cursor:text}
+  body.editing [data-edit]:hover{box-shadow:0 0 0 1px rgba(255,106,19,.4)}
+  body.editing [data-edit]:focus{box-shadow:0 0 0 2px var(--orange); background:rgba(255,106,19,.06)}
+  .ed-only{display:none}
+  body.editing .ed-only{display:inline-flex}
+
+  /* ---------- Cover ---------- */
+  .s-cover{display:flex}
+  .s-cover .left{flex:1; padding:0 0 60px 70px; display:flex; flex-direction:column; justify-content:flex-end; position:relative; z-index:2}
+  .s-cover .left .kicker{font-size:14px; letter-spacing:6px; color:var(--orange); font-weight:700; margin-bottom:20px; text-transform:uppercase}
+  .s-cover .brandbig{font-weight:800; font-size:40px; color:var(--orange); letter-spacing:.5px; margin-bottom:6px}
+  .s-cover h1{font-size:64px; margin:0 0 18px; font-weight:800; line-height:1.08; letter-spacing:1px}
+  .s-cover .sub{font-size:20px; color:var(--ink-2); margin-bottom:26px}
+  .s-cover .year{position:absolute; top:90px; left:70px; font-size:120px; font-weight:800; color:rgba(255,255,255,.05); letter-spacing:4px}
+  .s-cover .pills{display:flex; gap:10px; flex-wrap:wrap}
+  .s-cover .right{flex:0 0 430px; display:grid; grid-template-rows:repeat(3,1fr); gap:10px; padding:14px}
+  .s-cover .right .ph{border-radius:14px; overflow:hidden; background:#16161a; position:relative}
+  .s-cover .right .ph img{width:100%; height:100%; object-fit:cover; display:block}
+  .s-cover .right .ph::after{content:""; position:absolute; inset:0; background:linear-gradient(120deg,rgba(255,106,19,.12),transparent 60%)}
+
+  .pill{
+    display:inline-flex; align-items:center; padding:7px 15px; border:1px solid var(--orange);
+    color:var(--orange); border-radius:24px; font-size:14px; font-weight:600; background:rgba(255,106,19,.05);
+  }
+
+  /* ---------- Index ---------- */
+  .s-index{padding:78px 40px 30px}
+  .grid3{display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.06)}
+  .sc-card{background:var(--slide-bg); padding:22px 24px 18px; min-height:202px; display:flex; flex-direction:column; position:relative}
+  .sc-card .num{font-size:30px; font-weight:800; color:#3a2a1e; line-height:1; margin-bottom:8px}
+  .sc-card.sel-mark .num{color:var(--orange)}
+  .sc-card .t{font-size:18px; font-weight:700; margin-bottom:8px}
+  .sc-card .d{font-size:12.5px; color:var(--ink-2); line-height:1.6; flex:1}
+  .sc-card .tags{display:flex; gap:6px; flex-wrap:wrap; margin-top:12px}
+  .tag{
+    display:inline-flex; align-items:center; padding:4px 10px; border:1px solid #5a3a28;
+    color:#ff9460; border-radius:6px; font-size:11px; background:rgba(255,106,19,.06); white-space:nowrap;
+  }
+  .sc-card .sc-del{position:absolute; top:10px; right:10px}
+
+  /* ---------- Feature ---------- */
+  .s-feat{display:flex; padding-top:54px; height:100%}
+  .s-feat .col-l{flex:1; padding:0 50px; display:flex; flex-direction:column; justify-content:center}
+  .s-feat .eyebrow{font-size:12px; letter-spacing:3px; color:var(--orange); font-weight:700; margin-bottom:14px}
+  .s-feat h2{font-size:52px; margin:0 0 6px; font-weight:800; line-height:1.1}
+  .s-feat .sub{font-size:13px; letter-spacing:3px; color:#6f6f78; margin-bottom:30px; text-transform:uppercase}
+  .s-feat ul{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:16px}
+  .s-feat li{display:flex; gap:12px; font-size:16px; line-height:1.55; color:#e6e6ea}
+  .s-feat li .dot{flex:0 0 auto; width:7px; height:7px; border-radius:50%; background:var(--orange); margin-top:9px}
+  .s-feat li .li-del{margin-left:auto}
+  .s-feat .divider{height:1px; background:rgba(255,255,255,.1); margin:30px 0 16px; max-width:560px}
+  .s-feat .scene-label{font-size:11px; color:#6f6f78; letter-spacing:1px; margin-bottom:12px}
+  .s-feat .scene-tags{display:flex; gap:10px; flex-wrap:wrap}
+  .s-feat .col-r{flex:0 0 480px; border-left:1px solid rgba(255,255,255,.06); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px; padding:24px}
+  .phone{
+    width:236px; height:512px; border-radius:34px; padding:8px; background:#1b1b20;
+    box-shadow:0 18px 50px rgba(0,0,0,.6); border:1px solid #2a2a30; position:relative;
+  }
+  .phone img{width:100%; height:100%; object-fit:cover; object-position:top; border-radius:27px; display:block; background:#000}
+  .phone .ph-upload{position:absolute; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,.55); border-radius:27px; color:#fff; font-size:13px}
+  body.editing .phone:hover .ph-upload{display:flex; cursor:pointer}
+  .watch{
+    width:300px; border:1px dashed #3a3a42; border-radius:12px; padding:14px; text-align:center;
+    color:var(--ink-2); font-size:14px; display:flex; align-items:center; justify-content:center; gap:10px; cursor:pointer;
+  }
+  .watch:hover{border-color:var(--orange); color:var(--orange)}
+  .watch .play{width:26px; height:26px; border-radius:50%; border:1px solid currentColor; display:inline-flex; align-items:center; justify-content:center; font-size:11px}
+
+  /* small inline add/remove controls in edit mode */
+  .x-btn{display:none; cursor:pointer; color:#ff6a6a; font-weight:700; padding:0 6px; border-radius:5px; font-size:14px}
+  body.editing .x-btn{display:inline-flex}
+  .x-btn:hover{background:#2a1414}
+  .add-inline{display:none; margin-top:10px; font-size:12px; color:var(--orange); cursor:pointer; border:1px dashed #5a3a28; border-radius:7px; padding:6px 10px; width:fit-content}
+  body.editing .add-inline{display:inline-flex; align-items:center; gap:6px}
+  .add-inline:hover{background:rgba(255,106,19,.08)}
+
+  /* ---------- Password gate ---------- */
+  .gate{position:fixed; inset:0; z-index:200; background:#060607; display:flex; align-items:center; justify-content:center}
+  .gate.hidden{display:none}
+  .gate-box{width:320px; background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:30px 26px; text-align:center; box-shadow:0 20px 60px rgba(0,0,0,.6)}
+  .gate-logo{font-size:18px; font-weight:800; margin-bottom:6px}
+  .gate-logo b{color:var(--orange)}
+  .gate-sub{font-size:13px; color:var(--ink-3); margin-bottom:20px}
+  .gate-box input{width:100%; padding:11px 13px; border-radius:9px; border:1px solid var(--line); background:var(--panel-2); color:var(--ink); font-size:15px; margin-bottom:12px; outline:none}
+  .gate-box input:focus{border-color:var(--orange)}
+  .gate-err{color:#ff6a6a; font-size:12px; margin-top:12px; height:14px; opacity:0}
+  .gate-err.show{opacity:1}
+
+  .empty{color:var(--ink-3); text-align:center; padding:80px 20px}
+  .toast{
+    position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:var(--orange); color:#1a0d00;
+    padding:11px 20px; border-radius:10px; font-weight:700; font-size:14px; z-index:99; box-shadow:0 8px 30px rgba(0,0,0,.4);
+    opacity:0; pointer-events:none; transition:.25s;
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(-4px)}
+
+  /* ---------- Print ---------- */
+  @media print{
+    @page{size:13.333in 7.5in; margin:0}
+    .toolbar,.sidebar,.canvas-wrap>*{}
+    .toolbar,.sidebar{display:none !important}
+    body{height:auto; overflow:visible; background:#fff}
+    .main{display:block}
+    .canvas-wrap{overflow:visible; padding:0; background:#fff}
+    .canvas{max-width:none; margin:0; gap:0}
+    .slide-frame{box-shadow:none; border-radius:0; width:1280px !important; height:720px !important; page-break-after:always; break-after:page}
+    .slide-frame.unsel{display:none !important}
+    .slide-frame .badge{display:none !important}
+    .slide{transform:none !important}
+    .x-btn,.add-inline,.ed-only,.ph-upload,.sc-del,.del{display:none !important}
+  }
+</style>
+</head>
+<body>
+  <div class="gate" id="gate">
+    <div class="gate-box">
+      <div class="gate-logo"><b>moomoo</b> 植入内容工作台</div>
+      <div class="gate-sub">请输入访问密码</div>
+      <input type="password" id="gatePw" placeholder="密码" autocomplete="off">
+      <button class="btn primary" id="gateBtn" style="width:100%;justify-content:center">进入</button>
+      <div class="gate-err" id="gateErr">密码不正确</div>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <div class="brand"><b>moomoo</b> 植入内容工作台<small>选择页面 · 编辑内容 · 导出 PDF</small></div>
+    <div class="spacer"></div>
+    <span class="count-pill">已选 <b id="selCount">0</b> / <span id="totalCount">0</span> 页</span>
+    <button class="btn ghost" id="btnEdit">✏️ 编辑模式</button>
+    <button class="btn ghost" id="btnExportJson">⬇️ 导出内容</button>
+    <button class="btn ghost" id="btnReset" title="清除本地修改，恢复到仓库已发布版本">↺ 重置</button>
+    <button class="btn primary" id="btnPdf">🖨️ 导出 PDF</button>
+  </div>
+
+  <div class="main">
+    <aside class="sidebar">
+      <div class="sidebar-head">
+        <h3>页面 / Pages</h3>
+        <span><span class="mini" id="selAll">全选</span> · <span class="mini" id="selNone">全不选</span></span>
+      </div>
+      <div class="page-list" id="pageList"></div>
+      <div style="padding:0 14px 14px">
+        <button class="btn ghost add-page" id="btnAdd">＋ 新增功能页</button>
+      </div>
+    </aside>
+
+    <section class="canvas-wrap">
+      <div class="canvas" id="canvas"></div>
+    </section>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <input type="file" id="imgPicker" accept="image/*" style="display:none">
+
+<script src="content.js"></script>
+<script>
+/* ===== 访问密码（改这里即可）===== */
+const ACCESS_PASSWORD = 'moomoo2026';
+/* ================================== */
+const LS_GATE = 'moomoo_wb_gate_v1';
+function showGate(){
+  const gate=document.getElementById('gate'), pw=document.getElementById('gatePw'), err=document.getElementById('gateErr');
+  if(localStorage.getItem(LS_GATE)===ACCESS_PASSWORD){ gate.classList.add('hidden'); start(); return; }
+  const tryUnlock=()=>{
+    if(pw.value===ACCESS_PASSWORD){ localStorage.setItem(LS_GATE, ACCESS_PASSWORD); gate.classList.add('hidden'); start(); }
+    else { err.classList.add('show'); pw.select(); }
+  };
+  document.getElementById('gateBtn').addEventListener('click', tryUnlock);
+  pw.addEventListener('keydown', e=>{ if(e.key==='Enter') tryUnlock(); });
+  pw.focus();
+}
+
+const LS_CONTENT = 'moomoo_wb_content_v1';
+const LS_SELECT  = 'moomoo_wb_select_v1';
+let content = null;
+let selected = null;        // Set of page ids
+let editing = false;
+let imgTargetId = null;
+
+/* ---------- load / persist ---------- */
+function load(){
+  const saved = localStorage.getItem(LS_CONTENT);
+  if(saved){
+    try{ content = JSON.parse(saved); }catch(e){ content = null; }
+  }
+  if(!content || !content.pages || !content.pages.length){
+    // 内容内嵌在 content.js 里，无需 fetch，本地双击 / 线上都能加载
+    if(window.DEFAULT_CONTENT){
+      content = JSON.parse(JSON.stringify(window.DEFAULT_CONTENT));
+    }else{
+      document.getElementById('canvas').innerHTML =
+        '<div class="empty">未找到内容数据（content.js）。请确认 content.js 与 index.html 在同一目录下。</div>';
+      return;
+    }
+  }
+  const sel = localStorage.getItem(LS_SELECT);
+  if(sel){ try{ selected = new Set(JSON.parse(sel)); }catch(e){} }
+  if(!selected){ selected = new Set(content.pages.map(p=>p.id)); }
+  render();
+}
+function persist(){ localStorage.setItem(LS_CONTENT, JSON.stringify(content)); }
+function persistSel(){ localStorage.setItem(LS_SELECT, JSON.stringify([...selected])); }
+
+/* ---------- helpers ---------- */
+const esc = s => (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function pageById(id){ return content.pages.find(p=>p.id===id); }
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),1800); }
+
+/* ---------- sidebar ---------- */
+function renderSidebar(){
+  const list = document.getElementById('pageList');
+  list.innerHTML = '';
+  content.pages.forEach((p, i)=>{
+    const row = document.createElement('div');
+    row.className = 'row' + (selected.has(p.id)?' sel':'');
+    row.draggable = true; row.dataset.idx = i;
+    const typeLabel = p.type==='cover'?'封面':p.type==='index'?'场景索引':('功能页 '+(p.featureNo||''));
+    row.innerHTML = `
+      <span class="grip">⋮⋮</span>
+      <input type="checkbox" ${selected.has(p.id)?'checked':''}>
+      <div class="meta"><div class="t">${esc(p.title||p.heading||'未命名')}</div><div class="s">${esc(typeLabel)}</div></div>
+      <span class="del" title="删除此页">🗑</span>`;
+    // toggle selection (row click)
+    row.addEventListener('click', e=>{
+      if(e.target.closest('.del')) return;
+      if(e.target.matches('input')) { toggleSel(p.id); return; }
+      toggleSel(p.id);
+    });
+    row.querySelector('input').addEventListener('click', e=>e.stopPropagation());
+    row.querySelector('input').addEventListener('change', ()=>toggleSel(p.id));
+    row.querySelector('.del').addEventListener('click', e=>{ e.stopPropagation(); deletePage(p.id); });
+    // scroll to slide on dblclick
+    row.addEventListener('dblclick', ()=>{
+      const el = document.getElementById('frame-'+p.id);
+      if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
+    });
+    // drag reorder
+    row.addEventListener('dragstart', e=>{ row.classList.add('dragging'); e.dataTransfer.setData('text/plain', i); });
+    row.addEventListener('dragend', ()=>row.classList.remove('dragging'));
+    row.addEventListener('dragover', e=>e.preventDefault());
+    row.addEventListener('drop', e=>{
+      e.preventDefault();
+      const from = +e.dataTransfer.getData('text/plain'), to = i;
+      if(from===to) return;
+      const [moved] = content.pages.splice(from,1);
+      content.pages.splice(to,0,moved);
+      persist(); render();
+    });
+    list.appendChild(row);
+  });
+  document.getElementById('selCount').textContent = [...selected].filter(id=>pageById(id)).length;
+  document.getElementById('totalCount').textContent = content.pages.length;
+}
+function toggleSel(id){
+  if(selected.has(id)) selected.delete(id); else selected.add(id);
+  persistSel(); render();
+}
+
+/* ---------- slide rendering ---------- */
+function ed(path){ return `data-edit data-path="${path}"`; }
+
+function renderCover(p, idx){
+  const imgs = ['assets/cover-0.png','assets/cover-2.png','assets/cover-1.png'];
+  const pills = (p.tags||[]).map((t,ti)=>`<span class="pill"><span ${ed(`pages.${idx}.tags.${ti}`)}>${esc(t)}</span><span class="x-btn" data-arr="pages.${idx}.tags" data-i="${ti}">×</span></span>`).join('');
+  return `<div class="slide s-cover">
+    <div class="year" ${ed(`pages.${idx}.year`)}>${esc(p.year)}</div>
+    <div class="left">
+      <div class="kicker"><span ${ed(`pages.${idx}.subtitle`)}>${esc(p.subtitle)}</span></div>
+      <div class="brandbig">moomoo</div>
+      <h1 ${ed(`pages.${idx}.title`)}>${esc(p.title)}</h1>
+      <div class="pills">${pills}<span class="add-inline" data-addarr="pages.${idx}.tags">＋ 标签</span></div>
+    </div>
+    <div class="right">
+      ${imgs.map(s=>`<div class="ph"><img src="${s}" alt=""></div>`).join('')}
+    </div>
+  </div>`;
+}
+
+function renderIndex(p, idx){
+  const cards = (p.scenarios||[]).map((sc,si)=>{
+    const tags = (sc.tags||[]).map((t,ti)=>`<span class="tag"><span ${ed(`pages.${idx}.scenarios.${si}.tags.${ti}`)}>${esc(t)}</span><span class="x-btn" data-arr="pages.${idx}.scenarios.${si}.tags" data-i="${ti}">×</span></span>`).join('');
+    return `<div class="sc-card">
+      <span class="del sc-del x-btn" data-arr="pages.${idx}.scenarios" data-i="${si}" style="position:absolute;top:8px;right:8px">×</span>
+      <div class="num" ${ed(`pages.${idx}.scenarios.${si}.num`)}>${esc(sc.num)}</div>
+      <div class="t" ${ed(`pages.${idx}.scenarios.${si}.title`)}>${esc(sc.title)}</div>
+      <div class="d" ${ed(`pages.${idx}.scenarios.${si}.desc`)}>${esc(sc.desc)}</div>
+      <div class="tags">${tags}<span class="add-inline" data-addarr="pages.${idx}.scenarios.${si}.tags" style="padding:3px 7px;font-size:10px">＋</span></div>
+    </div>`;
+  }).join('');
+  return `<div class="slide">
+    <div class="topbar"><span class="logo">moomoo</span><span class="crumb"><span ${ed(`pages.${idx}.eyebrow`)}>${esc(p.eyebrow)}</span><span class="sep">·</span><span ${ed(`pages.${idx}.heading`)}>${esc(p.heading)}</span></span></div>
+    <div class="s-index">
+      <div class="grid3">${cards}</div>
+      <span class="add-inline" data-addscenario="${idx}" style="margin-top:14px">＋ 新增场景</span>
+    </div>
+  </div>`;
+}
+
+function renderFeature(p, idx){
+  const crumb = `核心功能 · ${esc(p.featureNo||'')} / 08 · ${esc(p.title)}`;
+  const bullets = (p.bullets||[]).map((b,bi)=>`<li><span class="dot"></span><span ${ed(`pages.${idx}.bullets.${bi}`)} style="flex:1">${esc(b)}</span><span class="x-btn li-del" data-arr="pages.${idx}.bullets" data-i="${bi}">×</span></li>`).join('');
+  const tags = (p.scenarioTags||[]).map((t,ti)=>`<span class="tag"><span ${ed(`pages.${idx}.scenarioTags.${ti}`)}>${esc(t)}</span><span class="x-btn" data-arr="pages.${idx}.scenarioTags" data-i="${ti}">×</span></span>`).join('');
+  const watch = (p.video&&p.video.trim())
+    ? `<a class="watch" href="${esc(p.video)}" target="_blank" rel="noopener"><span class="play">▶</span> 点击观看</a>`
+    : `<div class="watch"><span class="play">▶</span> <span ${ed(`pages.${idx}.video`)} data-placeholder="粘贴视频链接">${p.video?esc(p.video):'点击观看（编辑模式可填链接）'}</span></div>`;
+  const img = p.image && p.image.trim() ? esc(p.image) : '';
+  return `<div class="slide">
+    <div class="topbar"><span class="logo">moomoo</span><span class="crumb">${crumb}</span></div>
+    <div class="s-feat">
+      <div class="col-l">
+        <div class="eyebrow" ${ed(`pages.${idx}.eyebrow`)}>${esc(p.eyebrow)}</div>
+        <h2 ${ed(`pages.${idx}.title`)}>${esc(p.title)}</h2>
+        <div class="sub" ${ed(`pages.${idx}.subtitle`)}>${esc(p.subtitle)}</div>
+        <ul>${bullets}</ul>
+        <span class="add-inline" data-addarr="pages.${idx}.bullets">＋ 新增卖点</span>
+        <div class="divider"></div>
+        <div class="scene-label">适合植入场景</div>
+        <div class="scene-tags">${tags}<span class="add-inline" data-addarr="pages.${idx}.scenarioTags" style="padding:3px 9px">＋</span></div>
+      </div>
+      <div class="col-r">
+        <div class="phone" data-imgfor="${p.id}">
+          ${img?`<img src="${img}" alt="">`:`<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#555;font-size:13px;border-radius:27px;background:#101014">编辑模式点击上传截图</div>`}
+          <div class="ph-upload">点击替换截图</div>
+        </div>
+        ${watch}
+      </div>
+    </div>
+  </div>`;
+}
+
+function render(){
+  renderSidebar();
+  const canvas = document.getElementById('canvas');
+  if(!content.pages.length){ canvas.innerHTML = '<div class="empty">还没有页面。点击左下「＋ 新增功能页」开始。</div>'; return; }
+  canvas.innerHTML = content.pages.map((p,idx)=>{
+    let inner = '';
+    if(p.type==='cover') inner = renderCover(p,idx);
+    else if(p.type==='index') inner = renderIndex(p,idx);
+    else inner = renderFeature(p,idx);
+    const isSel = selected.has(p.id);
+    return `<div class="slide-frame ${isSel?'':'unsel'}" id="frame-${p.id}">
+      ${isSel?'':'<span class="badge">未选中 · 不会导出</span>'}
+      ${inner}
+    </div>`;
+  }).join('');
+  scaleSlides();
+}
+
+/* ---------- scale fixed slides to fit width ---------- */
+function scaleSlides(){
+  document.querySelectorAll('.slide-frame').forEach(frame=>{
+    const slide = frame.querySelector('.slide');
+    if(!slide) return;
+    const w = frame.clientWidth;
+    const scale = w/1280;
+    slide.style.transform = `scale(${scale})`;
+    frame.style.height = (720*scale)+'px';
+  });
+}
+window.addEventListener('resize', ()=>{ clearTimeout(window._rt); window._rt=setTimeout(scaleSlides,80); });
+
+/* ---------- data path get/set ---------- */
+function setByPath(path, val){
+  const parts = path.split('.'); let o = content;
+  for(let i=0;i<parts.length-1;i++) o = o[parts[i]];
+  o[parts[parts.length-1]] = val;
+}
+function getByPath(path){
+  return path.split('.').reduce((o,k)=>o?.[k], content);
+}
+
+/* ---------- editing: text via contentEditable ---------- */
+document.addEventListener('input', e=>{
+  const t = e.target.closest('[data-edit]');
+  if(!t || !editing) return;
+  setByPath(t.dataset.path, t.textContent);
+  document.getElementById('selCount'); // noop
+  clearTimeout(window._pt); window._pt=setTimeout(persist, 400);
+  // keep sidebar title in sync if editing a page title
+  if(/\.(title|heading)$/.test(t.dataset.path)) renderSidebar();
+});
+
+/* ---------- editing: structural (add/remove) via click ---------- */
+document.addEventListener('click', e=>{
+  if(!editing) return;
+  const xb = e.target.closest('.x-btn');
+  if(xb && xb.dataset.arr){
+    const arr = getByPath(xb.dataset.arr);
+    arr.splice(+xb.dataset.i, 1);
+    persist(); render(); return;
+  }
+  const add = e.target.closest('.add-inline');
+  if(add){
+    if(add.dataset.addarr){
+      const arr = getByPath(add.dataset.addarr);
+      arr.push('新内容');
+      persist(); render(); return;
+    }
+    if(add.dataset.addscenario!=null){
+      const p = content.pages[+add.dataset.addscenario];
+      p.scenarios = p.scenarios||[];
+      const n = String(p.scenarios.length+1).padStart(2,'0');
+      p.scenarios.push({num:n, title:'新场景', desc:'场景描述…', tags:['功能']});
+      persist(); render(); return;
+    }
+  }
+  const phone = e.target.closest('.phone[data-imgfor]');
+  if(phone){ imgTargetId = phone.dataset.imgfor; document.getElementById('imgPicker').click(); }
+});
+
+/* ---------- image upload ---------- */
+document.getElementById('imgPicker').addEventListener('change', e=>{
+  const f = e.target.files[0]; if(!f||!imgTargetId) return;
+  const reader = new FileReader();
+  reader.onload = ()=>{ const p = pageById(imgTargetId); p.image = reader.result; persist(); render(); toast('截图已更新'); };
+  reader.readAsDataURL(f);
+  e.target.value='';
+});
+
+/* ---------- page add / delete ---------- */
+function deletePage(id){
+  const p = pageById(id);
+  if(!confirm(`确定删除「${p.title||p.heading||'此页'}」？`)) return;
+  content.pages = content.pages.filter(x=>x.id!==id);
+  selected.delete(id);
+  persist(); persistSel(); render();
+}
+document.getElementById('btnAdd').addEventListener('click', ()=>{
+  const id = 'feature-' + Date.now();
+  const n = String(content.pages.filter(p=>p.type==='feature').length+1).padStart(2,'0');
+  content.pages.push({
+    id, type:'feature', featureNo:n, eyebrow:`FEATURE ${n} · NEW FEATURE`,
+    title:'新功能', subtitle:'NEW FEATURE', bullets:['第一条卖点…','第二条卖点…'],
+    scenarioTags:['适用场景'], image:'', video:''
+  });
+  selected.add(id); persist(); persistSel();
+  if(!editing) setEditing(true); else render();
+  toast('已新增功能页，进入编辑模式填写内容');
+  setTimeout(()=>document.getElementById('frame-'+id)?.scrollIntoView({behavior:'smooth'}), 100);
+});
+
+/* ---------- toolbar actions ---------- */
+function setEditing(v){
+  editing = v;
+  document.body.classList.toggle('editing', v);
+  const b = document.getElementById('btnEdit');
+  b.classList.toggle('on', v); b.textContent = v?'✓ 编辑中（点击退出）':'✏️ 编辑模式';
+  document.querySelectorAll('[data-edit]').forEach(el=>el.contentEditable = v);
+}
+document.getElementById('btnEdit').addEventListener('click', ()=>setEditing(!editing));
+document.getElementById('selAll').addEventListener('click', ()=>{ selected=new Set(content.pages.map(p=>p.id)); persistSel(); render(); });
+document.getElementById('selNone').addEventListener('click', ()=>{ selected=new Set(); persistSel(); render(); });
+document.getElementById('btnPdf').addEventListener('click', ()=>{
+  if(![...selected].filter(id=>pageById(id)).length){ toast('请先勾选至少一页'); return; }
+  if(editing) setEditing(false);
+  setTimeout(()=>window.print(), 120);
+});
+document.getElementById('btnExportJson').addEventListener('click', ()=>{
+  const js = '// 工作台内容源文件（可视化编辑后导出；覆盖同名文件并提交即可对所有人生效）\n'
+           + 'window.DEFAULT_CONTENT = ' + JSON.stringify(content,null,2) + ';\n';
+  const blob = new Blob([js], {type:'text/javascript'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'content.js'; a.click();
+  toast('已导出 content.js，覆盖仓库同名文件并提交即可永久生效');
+});
+document.getElementById('btnReset').addEventListener('click', ()=>{
+  if(!confirm('清除本地所有修改，恢复到仓库已发布的 content.json？')) return;
+  localStorage.removeItem(LS_CONTENT); localStorage.removeItem(LS_SELECT);
+  content=null; selected=null; load();
+});
+
+/* ---------- startup (behind password gate) ---------- */
+function start(){ load(); }
+showGate();
+</script>
+</body>
+</html>
