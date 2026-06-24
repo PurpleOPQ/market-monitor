@@ -39,9 +39,23 @@ const VIEWER_PASSWORD = 'moomoo2026';
 - 卖点 / 标签 / 场景卡片末尾有 `＋` 可新增，每项悬停出现 `×` 可删除
 - 功能页手机区域：编辑模式下点击即可上传替换截图
 - 「点击观看」按钮：编辑模式下填入视频链接，即变成可点链接
-- 改完点 **⬇️ 导出内容** → 用下载的 `content.js` 覆盖本目录同名文件并提交到仓库 → 对所有人永久生效
+- 改完点 **🚀 保存并发布** → 一键提交到仓库，约 1 分钟后同事刷新即可看到（见下「一键发布」）
+- 或点 **⬇️ 导出内容** → 下载 `content.js` 手动覆盖提交（备份/无 Token 时用）
 
-> 编辑只暂存在你本地浏览器，直到导出 `content.js` 并提交。点 **↺ 重置** 可清除本地修改、恢复到仓库已发布版本。
+> 编辑先暂存在你本地浏览器，点「保存并发布」或导出提交后才对所有人生效。点 **↺ 重置** 可清除本地修改、恢复到仓库已发布版本。
+
+## 一键发布（推荐，免去导出/git）
+编辑者点 **🚀 保存并发布**，工作台会通过 GitHub API 直接把 `content.js` 提交到仓库——不用导出文件、不用碰 git。首次会让你粘贴一个 GitHub Token（只存在你这台电脑的浏览器里）。
+
+**创建 Token（一次性，约 2 分钟）：**
+1. 打开 <https://github.com/settings/tokens?type=beta>（Fine-grained tokens）→ **Generate new token**
+2. **Repository access** → Only select repositories → 选 `PurpleOPQ/market-monitor`
+3. **Permissions** → Repository permissions → **Contents** 设为 **Read and write**
+4. 生成后复制 token（`github_pat_...`），第一次点「保存并发布」时粘贴即可
+
+- Token 只保存在你本机浏览器（localStorage），点右上「退出」会一并清除。
+- 想作废随时去同一页面 Revoke；建议设较短有效期。
+- 同事是查看者，看不到「保存并发布」按钮，也不需要 Token。
 
 ### 3. 新增功能介绍页
 - 点左下 **＋ 新增功能页**，追加一张空白功能页并自动进入编辑模式，填好内容、传截图
