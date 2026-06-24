@@ -165,7 +165,17 @@
     color:var(--ink-2); font-size:14px; display:flex; align-items:center; justify-content:center; gap:10px; cursor:pointer;
   }
   .watch:hover{border-color:var(--orange); color:var(--orange)}
-  .watch .play{width:26px; height:26px; border-radius:50%; border:1px solid currentColor; display:inline-flex; align-items:center; justify-content:center; font-size:11px}
+  .watch .play, .watch-edit .play{width:26px; height:26px; border-radius:50%; border:1px solid currentColor; display:inline-flex; align-items:center; justify-content:center; font-size:11px; flex:0 0 auto}
+  a.watch{text-decoration:none}
+  a.phone{text-decoration:none; display:block}
+  .phone-link{cursor:pointer; transition:box-shadow .15s, border-color .15s}
+  .phone-link:hover{box-shadow:0 22px 60px rgba(255,106,19,.28); border-color:#3a3a42}
+  .ph-empty{width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:#555; font-size:13px; border-radius:27px; background:#101014; text-align:center; padding:0 16px}
+  .watch-edit{width:300px; border:1px dashed #3a3a42; border-radius:12px; padding:12px 14px; display:flex; align-items:center; gap:10px; color:var(--ink-2); font-size:13px}
+  .watch-edit .watch-url{flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; outline:none; color:var(--orange)}
+  .watch-edit .watch-url:focus{overflow:auto}
+  .watch-edit .watch-url:empty:before{content:attr(data-ph); color:#5a5a62}
+  .watch-hint{width:300px; margin-top:8px; font-size:11px; color:#5a5a62; text-align:center; line-height:1.5}
 
   /* small inline add/remove controls in edit mode */
   .x-btn{display:none; cursor:pointer; color:#ff6a6a; font-weight:700; padding:0 6px; border-radius:5px; font-size:14px}
@@ -246,7 +256,7 @@
   </div>
 
   <div class="toolbar">
-    <div class="brand"><b>moomoo</b> 植入内容工作台<small>选择页面 · 编辑内容 · 导出 PDF　·　<span style="color:var(--orange)">build 2026-06-24d · 发布防冲突</span></small></div>
+    <div class="brand"><b>moomoo</b> 植入内容工作台<small>选择页面 · 编辑内容 · 导出 PDF　·　<span style="color:var(--orange)">build 2026-06-24e · 视频链接美化</span></small></div>
     <div class="spacer"></div>
     <span class="count-pill">已选 <b id="selCount">0</b> / <span id="totalCount">0</span> 页</span>
     <button class="btn ghost editor-only" id="btnEdit">✏️ 编辑模式</button>
@@ -437,10 +447,22 @@ function renderFeature(p, idx){
   const crumb = `核心功能 · ${esc(p.featureNo||'')} / 08 · ${esc(p.title)}`;
   const bullets = (p.bullets||[]).map((b,bi)=>`<li><span class="dot"></span><span ${ed(`pages.${idx}.bullets.${bi}`)} style="flex:1">${esc(b)}</span><span class="x-btn li-del" data-arr="pages.${idx}.bullets" data-i="${bi}">×</span></li>`).join('');
   const tags = (p.scenarioTags||[]).map((t,ti)=>`<span class="tag"><span ${ed(`pages.${idx}.scenarioTags.${ti}`)}>${esc(t)}</span><span class="x-btn" data-arr="pages.${idx}.scenarioTags" data-i="${ti}">×</span></span>`).join('');
-  const watch = (p.video&&p.video.trim())
-    ? `<a class="watch" href="${esc(p.video)}" target="_blank" rel="noopener"><span class="play">▶</span> 点击观看</a>`
-    : `<div class="watch"><span class="play">▶</span> <span ${ed(`pages.${idx}.video`)} data-placeholder="粘贴视频链接">${p.video?esc(p.video):'点击观看（编辑模式可填链接）'}</span></div>`;
   const img = p.image && p.image.trim() ? esc(p.image) : '';
+  const hasVideo = p.video && p.video.trim();
+  const imgInner = img ? `<img src="${img}" alt="">` : `<div class="ph-empty">编辑模式点击上传截图</div>`;
+  let phoneBlock, watchBlock;
+  if(editing){
+    phoneBlock = `<div class="phone" data-imgfor="${p.id}">${imgInner}<div class="ph-upload">点击替换截图</div></div>`;
+    watchBlock = `<div class="watch-edit"><span class="play">▶</span><span class="watch-url" ${ed(`pages.${idx}.video`)} data-ph="粘贴视频链接，如 https://…">${hasVideo?esc(p.video):''}</span></div>`
+               + `<div class="watch-hint">浏览 / 导出 PDF 时，点截图或「点击观看」会跳转此链接</div>`;
+  } else {
+    phoneBlock = hasVideo
+      ? `<a class="phone phone-link" href="${esc(p.video)}" target="_blank" rel="noopener" title="点击观看视频">${imgInner}</a>`
+      : `<div class="phone">${imgInner}</div>`;
+    watchBlock = hasVideo
+      ? `<a class="watch" href="${esc(p.video)}" target="_blank" rel="noopener"><span class="play">▶</span> 点击观看</a>`
+      : '';
+  }
   return `<div class="slide">
     <div class="topbar"><span class="logo">moomoo</span><span class="crumb">${crumb}</span></div>
     <div class="s-feat">
@@ -455,11 +477,8 @@ function renderFeature(p, idx){
         <div class="scene-tags">${tags}<span class="add-inline" data-addarr="pages.${idx}.scenarioTags" style="padding:3px 9px">＋</span></div>
       </div>
       <div class="col-r">
-        <div class="phone" data-imgfor="${p.id}">
-          ${img?`<img src="${img}" alt="">`:`<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#555;font-size:13px;border-radius:27px;background:#101014">编辑模式点击上传截图</div>`}
-          <div class="ph-upload">点击替换截图</div>
-        </div>
-        ${watch}
+        ${phoneBlock}
+        ${watchBlock}
       </div>
     </div>
   </div>`;
