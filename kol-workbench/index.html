@@ -186,6 +186,13 @@
   .gate-box input:focus{border-color:var(--orange)}
   .gate-err{color:#ff6a6a; font-size:12px; margin-top:12px; height:14px; opacity:0}
   .gate-err.show{opacity:1}
+  /* publish result banner */
+  .banner{display:none; align-items:flex-start; gap:12px; padding:12px 18px; border-bottom:1px solid var(--line); font-size:13px; white-space:pre-line; line-height:1.55}
+  .banner.ok{display:flex; background:rgba(40,180,90,.12); color:#86e3ac; border-bottom-color:#2a5a3a}
+  .banner.err{display:flex; background:rgba(255,80,80,.1); color:#ff9b9b; border-bottom-color:#5a2a2a}
+  .banner #bannerMsg{flex:1}
+  .banner #bannerX{cursor:pointer; font-size:17px; line-height:1; opacity:.7; padding:0 4px}
+  .banner #bannerX:hover{opacity:1}
   /* viewer role: hide all editing affordances */
   body.viewer .editor-only{display:none !important}
   body.viewer .del{display:none !important}
@@ -228,8 +235,18 @@
     </div>
   </div>
 
+  <div class="gate hidden" id="tokenModal">
+    <div class="gate-box">
+      <div class="gate-logo">🚀 保存并发布</div>
+      <div class="gate-sub">首次发布：粘贴你的 GitHub Token<br>（只存在你这台电脑的浏览器里）</div>
+      <input type="password" id="tokenInput" placeholder="github_pat_…" autocomplete="off">
+      <button class="btn primary" id="tokenOk" style="width:100%;justify-content:center">保存并发布</button>
+      <div style="margin-top:12px; font-size:12px"><span class="mini" id="tokenCancel">取消</span>　·　<a class="mini" href="https://github.com/settings/tokens?type=beta" target="_blank" rel="noopener" style="color:var(--ink-3)">如何创建 Token →</a></div>
+    </div>
+  </div>
+
   <div class="toolbar">
-    <div class="brand"><b>moomoo</b> 植入内容工作台<small>选择页面 · 编辑内容 · 导出 PDF　·　<span style="color:var(--orange)">build 2026-06-24b · 发布报错更清晰</span></small></div>
+    <div class="brand"><b>moomoo</b> 植入内容工作台<small>选择页面 · 编辑内容 · 导出 PDF　·　<span style="color:var(--orange)">build 2026-06-24c · 页内提示</span></small></div>
     <div class="spacer"></div>
     <span class="count-pill">已选 <b id="selCount">0</b> / <span id="totalCount">0</span> 页</span>
     <button class="btn ghost editor-only" id="btnEdit">✏️ 编辑模式</button>
@@ -239,6 +256,8 @@
     <button class="btn primary" id="btnPdf">🖨️ 导出 PDF</button>
     <span class="mini" id="btnLogout" title="切换登录身份" style="margin-left:4px">退出</span>
   </div>
+
+  <div class="banner" id="banner"><span id="bannerMsg"></span><span id="bannerX">×</span></div>
 
   <div class="main">
     <aside class="sidebar">
@@ -592,13 +611,28 @@ const GH_PATH = 'kol-workbench/content.js';
 const GH_BRANCH = 'main';
 const LS_TOKEN = 'moomoo_wb_ghtoken_v1';
 function b64utf8(str){ return btoa(unescape(encodeURIComponent(str))); }
+function showBanner(msg, ok){
+  document.getElementById('bannerMsg').textContent = msg;
+  document.getElementById('banner').className = 'banner ' + (ok?'ok':'err');
+}
+document.getElementById('bannerX').addEventListener('click', ()=>{ document.getElementById('banner').className='banner'; });
+function getToken(){
+  return new Promise(resolve=>{
+    const saved = localStorage.getItem(LS_TOKEN);
+    if(saved){ resolve(saved); return; }
+    const m=document.getElementById('tokenModal'), inp=document.getElementById('tokenInput');
+    const okBtn=document.getElementById('tokenOk'), cancelBtn=document.getElementById('tokenCancel');
+    m.classList.remove('hidden'); inp.value=''; setTimeout(()=>inp.focus(),50);
+    function done(v){ m.classList.add('hidden'); okBtn.removeEventListener('click',ok); cancelBtn.removeEventListener('click',cancel); inp.removeEventListener('keydown',key); resolve(v); }
+    function ok(){ const v=inp.value.trim(); if(!v) return; localStorage.setItem(LS_TOKEN,v); done(v); }
+    function cancel(){ done(null); }
+    function key(e){ if(e.key==='Enter') ok(); else if(e.key==='Escape') cancel(); }
+    okBtn.addEventListener('click',ok); cancelBtn.addEventListener('click',cancel); inp.addEventListener('keydown',key);
+  });
+}
 async function publish(){
-  let token = localStorage.getItem(LS_TOKEN);
-  if(!token){
-    token = prompt('首次发布：粘贴你的 GitHub Token（仅存于本机浏览器，可随时撤销）。\n如何创建见 README「一键发布」一节。');
-    if(!token) return;
-    token = token.trim(); localStorage.setItem(LS_TOKEN, token);
-  }
+  const token = await getToken();
+  if(!token){ showBanner('已取消发布（没有填写 Token）。', false); return; }
   const headers = {Authorization:'Bearer '+token, Accept:'application/vnd.github+json'};
   const api = 'https://api.github.com/repos/'+GH_REPO+'/contents/'+encodeURIComponent(GH_PATH).replace(/%2F/g,'/');
   const ghMsg = async r => { const e = await r.json().catch(()=>({})); return e.message || ('HTTP '+r.status); };
@@ -619,10 +653,10 @@ async function publish(){
     if(r2.status===403){ throw new Error('权限不足（403）：'+await ghMsg(r2)+'\n\n请到 Token 设置里确认：\n① Repository access 已选中 PurpleOPQ/market-monitor\n② Permissions → Contents = Read and write'); }
     if(r2.status===404){ throw new Error('找不到仓库/无访问权（404）。\n请确认 Token 的 Repository access 已选中 PurpleOPQ/market-monitor。'); }
     if(!r2.ok){ throw new Error('发布失败（'+r2.status+'）：'+await ghMsg(r2)); }
-    toast('✅ 已发布！约 1 分钟后同事刷新即可看到');
+    showBanner('✅ 已发布成功！约 1 分钟后同事刷新即可看到最新内容。', true);
   }catch(err){
-    if(err instanceof TypeError){ alert('网络错误，无法连接 GitHub：'+err.message+'\n请检查网络后重试。'); }
-    else alert(err.message||String(err));
+    if(err instanceof TypeError){ showBanner('网络错误，无法连接 GitHub：'+err.message+'\n请检查网络后重试。', false); }
+    else showBanner(err.message||String(err), false);
   }finally{ btn.textContent=old; btn.disabled=false; }
 }
 document.getElementById('btnPublish').addEventListener('click', publish);
