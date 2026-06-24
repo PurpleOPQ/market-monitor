@@ -246,7 +246,7 @@
   </div>
 
   <div class="toolbar">
-    <div class="brand"><b>moomoo</b> 植入内容工作台<small>选择页面 · 编辑内容 · 导出 PDF　·　<span style="color:var(--orange)">build 2026-06-24c · 页内提示</span></small></div>
+    <div class="brand"><b>moomoo</b> 植入内容工作台<small>选择页面 · 编辑内容 · 导出 PDF　·　<span style="color:var(--orange)">build 2026-06-24d · 发布防冲突</span></small></div>
     <div class="spacer"></div>
     <span class="count-pill">已选 <b id="selCount">0</b> / <span id="totalCount">0</span> 页</span>
     <button class="btn ghost editor-only" id="btnEdit">✏️ 编辑模式</button>
@@ -639,20 +639,27 @@ async function publish(){
   const btn = document.getElementById('btnPublish'); const old = btn.textContent;
   btn.textContent='⏳ 发布中…'; btn.disabled=true;
   try{
-    // current file sha (needed to update)
-    const r1 = await fetch(api+'?ref='+GH_BRANCH, {headers});
-    let sha;
-    if(r1.ok){ sha=(await r1.json()).sha; }
-    else if(r1.status===401){ localStorage.removeItem(LS_TOKEN); throw new Error('Token 无效（401 Bad credentials）。\n多半是复制不完整或已过期——已清除，请重新创建 Token 后再粘贴。'); }
-    else if(r1.status!==404){ throw new Error('读取失败（'+r1.status+'）：'+await ghMsg(r1)); }
     const stamp = new Date().toLocaleString('zh-CN',{hour12:false});
-    const r2 = await fetch(api, {method:'PUT', headers, body:JSON.stringify({
-      message:'content: 工作台发布 '+stamp, content:b64utf8(contentJsString()), sha, branch:GH_BRANCH
-    })});
-    if(r2.status===401){ localStorage.removeItem(LS_TOKEN); throw new Error('Token 无效（401），已清除，请重新粘贴。'); }
-    if(r2.status===403){ throw new Error('权限不足（403）：'+await ghMsg(r2)+'\n\n请到 Token 设置里确认：\n① Repository access 已选中 PurpleOPQ/market-monitor\n② Permissions → Contents = Read and write'); }
-    if(r2.status===404){ throw new Error('找不到仓库/无访问权（404）。\n请确认 Token 的 Repository access 已选中 PurpleOPQ/market-monitor。'); }
-    if(!r2.ok){ throw new Error('发布失败（'+r2.status+'）：'+await ghMsg(r2)); }
+    const body = b64utf8(contentJsString());
+    let done = false, lastConflict = '';
+    for(let attempt=0; attempt<3 && !done; attempt++){
+      // fetch the CURRENT file sha, bypassing any cache (stale sha -> 409)
+      const r1 = await fetch(api+'?ref='+GH_BRANCH+'&_='+Date.now(), {headers, cache:'no-store'});
+      let sha;
+      if(r1.ok){ sha=(await r1.json()).sha; }
+      else if(r1.status===401){ localStorage.removeItem(LS_TOKEN); throw new Error('Token 无效（401 Bad credentials）。\n多半是复制不完整或已过期——已清除，请重新创建 Token 后再粘贴。'); }
+      else if(r1.status!==404){ throw new Error('读取失败（'+r1.status+'）：'+await ghMsg(r1)); }
+      const r2 = await fetch(api, {method:'PUT', headers, body:JSON.stringify({
+        message:'content: 工作台发布 '+stamp, content:body, sha, branch:GH_BRANCH
+      })});
+      if(r2.status===409){ lastConflict = await ghMsg(r2); continue; }   // sha changed/cached -> retry with fresh sha
+      if(r2.status===401){ localStorage.removeItem(LS_TOKEN); throw new Error('Token 无效（401），已清除，请重新粘贴。'); }
+      if(r2.status===403){ throw new Error('权限不足（403）：'+await ghMsg(r2)+'\n\n请到 Token 设置里确认：\n① Repository access 已选中 PurpleOPQ/market-monitor\n② Permissions → Contents = Read and write'); }
+      if(r2.status===404){ throw new Error('找不到仓库/无访问权（404）。\n请确认 Token 的 Repository access 已选中 PurpleOPQ/market-monitor。'); }
+      if(!r2.ok){ throw new Error('发布失败（'+r2.status+'）：'+await ghMsg(r2)); }
+      done = true;
+    }
+    if(!done) throw new Error('发布冲突（409）重试多次仍失败：'+lastConflict+'\n请刷新页面后再试。');
     showBanner('✅ 已发布成功！约 1 分钟后同事刷新即可看到最新内容。', true);
   }catch(err){
     if(err instanceof TypeError){ showBanner('网络错误，无法连接 GitHub：'+err.message+'\n请检查网络后重试。', false); }
