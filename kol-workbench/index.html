@@ -256,7 +256,7 @@
   </div>
 
   <div class="toolbar">
-    <div class="brand"><b>moomoo</b> 植入内容工作台<small>选择页面 · 编辑内容 · 导出 PDF　·　<span style="color:var(--orange)">build 2026-06-24e · 视频链接美化</span></small></div>
+    <div class="brand"><b>moomoo</b> 植入内容工作台<small>选择页面 · 编辑内容 · 导出 PDF　·　<span style="color:var(--orange)">build 2026-06-24f · 截图压缩+修链接</span></small></div>
     <div class="spacer"></div>
     <span class="count-pill">已选 <b id="selCount">0</b> / <span id="totalCount">0</span> 页</span>
     <button class="btn ghost editor-only" id="btnEdit">✏️ 编辑模式</button>
@@ -345,7 +345,13 @@ function load(){
   if(!selected){ selected = new Set(content.pages.map(p=>p.id)); }
   render();
 }
-function persist(){ localStorage.setItem(LS_CONTENT, JSON.stringify(content)); }
+function persist(){
+  try{ localStorage.setItem(LS_CONTENT, JSON.stringify(content)); }
+  catch(e){
+    if(typeof showBanner==='function')
+      showBanner('⚠️ 本地保存失败：浏览器存储空间不足（多为内嵌图片过多/过大）。\n当前改动这次还在，但刷新后可能丢失——建议尽快点「🚀 保存并发布」。上传的图已自动压缩，如仍超限请减少超大内嵌图。', false);
+  }
+}
 function persistSel(){ localStorage.setItem(LS_SELECT, JSON.stringify([...selected])); }
 
 /* ---------- helpers ---------- */
@@ -448,19 +454,21 @@ function renderFeature(p, idx){
   const bullets = (p.bullets||[]).map((b,bi)=>`<li><span class="dot"></span><span ${ed(`pages.${idx}.bullets.${bi}`)} style="flex:1">${esc(b)}</span><span class="x-btn li-del" data-arr="pages.${idx}.bullets" data-i="${bi}">×</span></li>`).join('');
   const tags = (p.scenarioTags||[]).map((t,ti)=>`<span class="tag"><span ${ed(`pages.${idx}.scenarioTags.${ti}`)}>${esc(t)}</span><span class="x-btn" data-arr="pages.${idx}.scenarioTags" data-i="${ti}">×</span></span>`).join('');
   const img = p.image && p.image.trim() ? esc(p.image) : '';
-  const hasVideo = p.video && p.video.trim();
+  const vid = (p.video||'').trim();
+  const hasVideo = /^https?:\/\//i.test(vid);   // only real URLs become clickable links
   const imgInner = img ? `<img src="${img}" alt="">` : `<div class="ph-empty">编辑模式点击上传截图</div>`;
   let phoneBlock, watchBlock;
   if(editing){
-    phoneBlock = `<div class="phone" data-imgfor="${p.id}">${imgInner}<div class="ph-upload">点击替换截图</div></div>`;
-    watchBlock = `<div class="watch-edit"><span class="play">▶</span><span class="watch-url" ${ed(`pages.${idx}.video`)} data-ph="粘贴视频链接，如 https://…">${hasVideo?esc(p.video):''}</span></div>`
+    phoneBlock = `<div class="phone" data-imgfor="${p.id}">${imgInner}<div class="ph-upload">点击替换截图</div></div>`
+               + `<button class="btn ghost" data-upload-for="${p.id}" style="margin-top:14px">📷 上传 / 更换截图</button>`;
+    watchBlock = `<div class="watch-edit"><span class="play">▶</span><span class="watch-url" ${ed(`pages.${idx}.video`)} data-ph="粘贴视频链接，如 https://…">${esc(vid)}</span></div>`
                + `<div class="watch-hint">浏览 / 导出 PDF 时，点截图或「点击观看」会跳转此链接</div>`;
   } else {
     phoneBlock = hasVideo
-      ? `<a class="phone phone-link" href="${esc(p.video)}" target="_blank" rel="noopener" title="点击观看视频">${imgInner}</a>`
+      ? `<a class="phone phone-link" href="${esc(vid)}" target="_blank" rel="noopener" title="点击观看视频">${imgInner}</a>`
       : `<div class="phone">${imgInner}</div>`;
     watchBlock = hasVideo
-      ? `<a class="watch" href="${esc(p.video)}" target="_blank" rel="noopener"><span class="play">▶</span> 点击观看</a>`
+      ? `<a class="watch" href="${esc(vid)}" target="_blank" rel="noopener"><span class="play">▶</span> 点击观看</a>`
       : '';
   }
   return `<div class="slide">
@@ -560,16 +568,38 @@ document.addEventListener('click', e=>{
       persist(); render(); return;
     }
   }
+  const upBtn = e.target.closest('[data-upload-for]');
+  if(upBtn){ imgTargetId = upBtn.dataset.uploadFor; document.getElementById('imgPicker').click(); return; }
   const phone = e.target.closest('.phone[data-imgfor]');
   if(phone){ imgTargetId = phone.dataset.imgfor; document.getElementById('imgPicker').click(); }
 });
 
-/* ---------- image upload ---------- */
+/* ---------- image upload (auto-compress to keep storage small) ---------- */
+function compressImage(file, cb){
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    const im = new Image();
+    im.onload = ()=>{
+      const maxW = 800;
+      const scale = Math.min(1, maxW/im.width);
+      const c = document.createElement('canvas');
+      c.width = Math.round(im.width*scale); c.height = Math.round(im.height*scale);
+      c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+      try{ cb(c.toDataURL('image/jpeg', 0.82)); }
+      catch(err){ cb(reader.result); }   // fallback to original on any canvas error
+    };
+    im.onerror = ()=> cb(reader.result);
+    im.src = reader.result;
+  };
+  reader.readAsDataURL(file);
+}
 document.getElementById('imgPicker').addEventListener('change', e=>{
   const f = e.target.files[0]; if(!f||!imgTargetId) return;
-  const reader = new FileReader();
-  reader.onload = ()=>{ const p = pageById(imgTargetId); p.image = reader.result; persist(); render(); toast('截图已更新'); };
-  reader.readAsDataURL(f);
+  const targetId = imgTargetId;
+  compressImage(f, dataUrl=>{
+    const p = pageById(targetId); if(!p) return;
+    p.image = dataUrl; persist(); render(); toast('截图已更新');
+  });
   e.target.value='';
 });
 
