@@ -263,11 +263,12 @@
   </div>
 
   <div class="toolbar">
-    <div class="brand"><b>moomoo</b> 植入内容工作台<small>选择页面 · 编辑内容 · 导出 PDF　·　<span style="color:var(--orange)">build 2026-06-25 · 一键套餐</span></small></div>
+    <div class="brand"><b>moomoo</b> 植入内容工作台<small>选择页面 · 编辑内容 · 导出 PDF　·　<span style="color:var(--orange)">build 2026-06-25b · 图片压缩释放空间</span></small></div>
     <div class="spacer"></div>
     <span class="count-pill">已选 <b id="selCount">0</b> / <span id="totalCount">0</span> 页</span>
     <button class="btn ghost editor-only" id="btnEdit">✏️ 编辑模式</button>
     <button class="btn primary editor-only" id="btnPublish" title="一键提交到仓库，同事刷新即可看到">🚀 保存并发布</button>
+    <button class="btn ghost editor-only" id="btnCompress" title="把所有内嵌大图重新压缩，释放本地空间、减小发布体积">🗜 压缩图片</button>
     <button class="btn ghost editor-only" id="btnExportJson" title="导出 content.js 文件（备份/手动提交用）">⬇️ 导出内容</button>
     <button class="btn ghost editor-only" id="btnReset" title="清除本地修改，恢复到仓库已发布版本">↺ 重置</button>
     <button class="btn primary" id="btnPdf">🖨️ 导出 PDF</button>
@@ -365,7 +366,7 @@ function persist(){
   try{ localStorage.setItem(LS_CONTENT, JSON.stringify(content)); }
   catch(e){
     if(typeof showBanner==='function')
-      showBanner('⚠️ 本地保存失败：浏览器存储空间不足（多为内嵌图片过多/过大）。\n当前改动这次还在，但刷新后可能丢失——建议尽快点「🚀 保存并发布」。上传的图已自动压缩，如仍超限请减少超大内嵌图。', false);
+      showBanner('⚠️ 本地保存失败：浏览器存储空间不足（多为内嵌图片过大）。\n请点工具栏「🗜 压缩图片」释放空间，然后即可正常编辑/保存。当前改动这次还在，刷新前请先压缩或点「🚀 保存并发布」。', false);
   }
 }
 function persistSel(){ localStorage.setItem(LS_SELECT, JSON.stringify([...selected])); }
@@ -618,6 +619,35 @@ document.getElementById('imgPicker').addEventListener('change', e=>{
   });
   e.target.value='';
 });
+
+/* re-compress an existing base64 image; resolve to a smaller dataURL (or original) */
+function recompressDataUrl(durl){
+  return new Promise(resolve=>{
+    const im = new Image();
+    im.onload = ()=>{
+      const maxW = 800, scale = Math.min(1, maxW/im.width);
+      const c = document.createElement('canvas');
+      c.width = Math.round(im.width*scale); c.height = Math.round(im.height*scale);
+      c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+      try{ const out = c.toDataURL('image/jpeg', 0.82); resolve(out.length < durl.length ? out : durl); }
+      catch(e){ resolve(durl); }
+    };
+    im.onerror = ()=> resolve(durl);
+    im.src = durl;
+  });
+}
+async function compressAllImages(){
+  const targets = content.pages.filter(p=>p.image && /^data:/i.test(p.image));
+  if(!targets.length){ showBanner('没有需要压缩的内嵌图片（现有图片已是外部文件或已压缩）。', true); return; }
+  const btn = document.getElementById('btnCompress'), old = btn.textContent; btn.textContent='⏳ 压缩中…'; btn.disabled=true;
+  let before=0, after=0;
+  for(const p of targets){ before += p.image.length; p.image = await recompressDataUrl(p.image); after += p.image.length; }
+  persist(); render();
+  btn.textContent=old; btn.disabled=false;
+  const kb = n => Math.round(n*3/4/1024);
+  showBanner('已压缩 '+targets.length+' 张图片：约 '+kb(before)+'KB → '+kb(after)+'KB。\n现在应可正常编辑/上传链接了，记得点「🚀 保存并发布」。', true);
+}
+document.getElementById('btnCompress').addEventListener('click', compressAllImages);
 
 /* ---------- page add / delete ---------- */
 function deletePage(id){
