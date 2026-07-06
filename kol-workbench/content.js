@@ -222,7 +222,7 @@ window.DEFAULT_CONTENT = {
       "id": "feature-sectors",
       "type": "feature",
       "featureNo": "05",
-      "eyebrow": "FEATURE 05 · THEMATIC SECTORS",
+      "eyebrow": "FEATURE · THEMATIC SECTORS",
       "title": "主题板块",
       "subtitle": "THEMATIC INVESTMENT SECTORS",
       "bullets": [
@@ -245,7 +245,7 @@ window.DEFAULT_CONTENT = {
       "id": "feature-compare",
       "type": "feature",
       "featureNo": "06",
-      "eyebrow": "FEATURE 06 · STOCK COMPARISON",
+      "eyebrow": "FEATURE · STOCK COMPARISON",
       "title": "股票对比",
       "subtitle": "MULTI-STOCK COMPARISON",
       "bullets": [
@@ -269,7 +269,7 @@ window.DEFAULT_CONTENT = {
       "id": "feature-fundamentals",
       "type": "feature",
       "featureNo": "07",
-      "eyebrow": "FEATURE 07 · FUNDAMENTALS",
+      "eyebrow": "FEATURE · FUNDAMENTALS",
       "title": "基本面分析",
       "subtitle": "FUNDAMENTAL ANALYSIS",
       "bullets": [
@@ -291,7 +291,7 @@ window.DEFAULT_CONTENT = {
       "id": "feature-smartmoney",
       "type": "feature",
       "featureNo": "08",
-      "eyebrow": "FEATURE 08 · SMART MONEY",
+      "eyebrow": "FEATURE · SMART MONEY",
       "title": "聪明钱 / 机构持仓",
       "subtitle": "INSTITUTIONAL HOLDINGS · SMART MONEY",
       "bullets": [
@@ -312,7 +312,7 @@ window.DEFAULT_CONTENT = {
       "id": "feature-1782248386590",
       "type": "feature",
       "featureNo": "10",
-      "eyebrow": "FEATURE 10 · NEW FEATURE",
+      "eyebrow": "FEATURE · NEW FEATURE",
       "title": "ETF对比",
       "subtitle": "NEW FEATURE",
       "bullets": [
@@ -333,7 +333,7 @@ window.DEFAULT_CONTENT = {
       "id": "feature-1782324283054",
       "type": "feature",
       "featureNo": "11",
-      "eyebrow": "FEATURE 11 · NEW FEATURE",
+      "eyebrow": "FEATURE · NEW FEATURE",
       "title": "moomoo AI",
       "subtitle": "NEW FEATURE",
       "bullets": [
@@ -354,7 +354,7 @@ window.DEFAULT_CONTENT = {
       "id": "feature-1782324291737",
       "type": "feature",
       "featureNo": "12",
-      "eyebrow": "FEATURE 12 · NEW FEATURE",
+      "eyebrow": "FEATURE · NEW FEATURE",
       "title": "财报站",
       "subtitle": "NEW FEATURE",
       "bullets": [
@@ -375,7 +375,7 @@ window.DEFAULT_CONTENT = {
       "id": "feature-1782324303270",
       "type": "feature",
       "featureNo": "13",
-      "eyebrow": "FEATURE 13 · NEW FEATURE",
+      "eyebrow": "FEATURE · NEW FEATURE",
       "title": "期权向导",
       "subtitle": "NEW FEATURE",
       "bullets": [
@@ -394,7 +394,7 @@ window.DEFAULT_CONTENT = {
       "id": "feature-1782324322487",
       "type": "feature",
       "featureNo": "14",
-      "eyebrow": "FEATURE 14 · NEW FEATURE",
+      "eyebrow": "FEATURE · NEW FEATURE",
       "title": "期权链",
       "subtitle": "NEW FEATURE",
       "bullets": [
@@ -412,7 +412,7 @@ window.DEFAULT_CONTENT = {
       "id": "feature-1782324356906",
       "type": "feature",
       "featureNo": "15",
-      "eyebrow": "FEATURE 15 · NEW FEATURE",
+      "eyebrow": "FEATURE · NEW FEATURE",
       "title": "ETF筛选",
       "subtitle": "NEW FEATURE",
       "bullets": [
@@ -431,7 +431,7 @@ window.DEFAULT_CONTENT = {
       "id": "feature-1782421732570",
       "type": "feature",
       "featureNo": "16",
-      "eyebrow": "FEATURE 16 · NEW FEATURE",
+      "eyebrow": "FEATURE · NEW FEATURE",
       "title": "分析师评级",
       "subtitle": "ANALYST ratings",
       "bullets": [
@@ -453,7 +453,7 @@ window.DEFAULT_CONTENT = {
       "id": "feature-1782421735770",
       "type": "feature",
       "featureNo": "17",
-      "eyebrow": "FEATURE 17 · NEW FEATURE",
+      "eyebrow": "FEATURE · NEW FEATURE",
       "title": "晨星研究",
       "subtitle": "MORNINGSTAR RESEARCH",
       "bullets": [
@@ -571,7 +571,7 @@ window.DEFAULT_CONTENT = {
       "type": "feature",
       "lang": "en",
       "featureNo": "09",
-      "eyebrow": "FEATURE 09 · $0 FX FEE",
+      "eyebrow": "FEATURE · $0 FX FEE",
       "title": "$0 Currency Conversion Fee",
       "subtitle": "ZERO-FEE CAD/USD CONVERSION",
       "bullets": [
@@ -597,7 +597,7 @@ window.DEFAULT_CONTENT = {
       "type": "feature",
       "lang": "en",
       "featureNo": "01",
-      "eyebrow": "FEATURE 01 · MACRO DATA",
+      "eyebrow": "FEATURE · MACRO DATA",
       "title": "Macro Data",
       "subtitle": "MACRO ECONOMIC DATA",
       "bullets": [
@@ -619,7 +619,7 @@ window.DEFAULT_CONTENT = {
       "type": "feature",
       "lang": "en",
       "featureNo": "02",
-      "eyebrow": "FEATURE 02 · AI SUMMARY",
+      "eyebrow": "FEATURE · AI SUMMARY",
       "title": "AI Summary",
       "subtitle": "AI-POWERED STOCK BRIEFING",
       "bullets": [
@@ -642,7 +642,7 @@ window.DEFAULT_CONTENT = {
       "type": "feature",
       "lang": "en",
       "featureNo": "03",
-      "eyebrow": "FEATURE 03 · NEWS",
+      "eyebrow": "FEATURE · NEWS",
       "title": "News",
       "subtitle": "REAL-TIME FINANCIAL NEWS",
       "bullets": [
@@ -667,7 +667,7 @@ window.DEFAULT_CONTENT = {
       "type": "feature",
       "lang": "en",
       "featureNo": "04",
-      "eyebrow": "FEATURE 04 · HEAT MAP",
+      "eyebrow": "FEATURE · HEAT MAP",
       "title": "Heat Map",
       "subtitle": "MARKET HEAT MAP",
       "bullets": [
@@ -690,7 +690,7 @@ window.DEFAULT_CONTENT = {
       "type": "feature",
       "lang": "en",
       "featureNo": "05",
-      "eyebrow": "FEATURE 05 · THEMATIC SECTORS",
+      "eyebrow": "FEATURE · THEMATIC SECTORS",
       "title": "Thematic Sectors",
       "subtitle": "THEMATIC INVESTMENT SECTORS",
       "bullets": [
@@ -714,7 +714,7 @@ window.DEFAULT_CONTENT = {
       "type": "feature",
       "lang": "en",
       "featureNo": "06",
-      "eyebrow": "FEATURE 06 · STOCK COMPARE",
+      "eyebrow": "FEATURE · STOCK COMPARE",
       "title": "Stock Compare",
       "subtitle": "MULTI-STOCK COMPARISON",
       "bullets": [
@@ -739,7 +739,7 @@ window.DEFAULT_CONTENT = {
       "type": "feature",
       "lang": "en",
       "featureNo": "07",
-      "eyebrow": "FEATURE 07 · FUNDAMENTALS",
+      "eyebrow": "FEATURE · FUNDAMENTALS",
       "title": "Fundamental Analysis",
       "subtitle": "FUNDAMENTAL ANALYSIS",
       "bullets": [
@@ -762,7 +762,7 @@ window.DEFAULT_CONTENT = {
       "type": "feature",
       "lang": "en",
       "featureNo": "08",
-      "eyebrow": "FEATURE 08 · SMART MONEY",
+      "eyebrow": "FEATURE · SMART MONEY",
       "title": "Smart Money / Institutional Holdings",
       "subtitle": "INSTITUTIONAL HOLDINGS · SMART MONEY",
       "bullets": [
@@ -784,7 +784,7 @@ window.DEFAULT_CONTENT = {
       "type": "feature",
       "lang": "en",
       "featureNo": "10",
-      "eyebrow": "FEATURE 10 · ETF COMPARISON",
+      "eyebrow": "FEATURE · ETF COMPARISON",
       "title": "ETF Comparison",
       "subtitle": "SIDE-BY-SIDE ETF COMPARISON",
       "bullets": [
@@ -806,7 +806,7 @@ window.DEFAULT_CONTENT = {
       "type": "feature",
       "lang": "en",
       "featureNo": "11",
-      "eyebrow": "FEATURE 11 · MOOMOO AI",
+      "eyebrow": "FEATURE · MOOMOO AI",
       "title": "moomoo AI",
       "subtitle": "YOUR 24/7 AI INVESTING ASSISTANT",
       "bullets": [
@@ -828,7 +828,7 @@ window.DEFAULT_CONTENT = {
       "type": "feature",
       "lang": "en",
       "featureNo": "12",
-      "eyebrow": "FEATURE 12 · EARNINGS HUB",
+      "eyebrow": "FEATURE · EARNINGS HUB",
       "title": "Earnings Hub",
       "subtitle": "EARNINGS CALENDAR · RESULTS · REACTIONS",
       "bullets": [
@@ -850,7 +850,7 @@ window.DEFAULT_CONTENT = {
       "type": "feature",
       "lang": "en",
       "featureNo": "13",
-      "eyebrow": "FEATURE 13 · OPTIONS WIZARD",
+      "eyebrow": "FEATURE · OPTIONS WIZARD",
       "title": "Options Wizard",
       "subtitle": "GUIDED OPTIONS STRATEGIES",
       "bullets": [
@@ -870,7 +870,7 @@ window.DEFAULT_CONTENT = {
       "type": "feature",
       "lang": "en",
       "featureNo": "14",
-      "eyebrow": "FEATURE 14 · OPTIONS CHAIN",
+      "eyebrow": "FEATURE · OPTIONS CHAIN",
       "title": "Options Chain",
       "subtitle": "FULL OPTIONS MARKET DATA",
       "bullets": [
@@ -889,7 +889,7 @@ window.DEFAULT_CONTENT = {
       "type": "feature",
       "lang": "en",
       "featureNo": "15",
-      "eyebrow": "FEATURE 15 · ETF SCREENER",
+      "eyebrow": "FEATURE · ETF SCREENER",
       "title": "ETF Screener",
       "subtitle": "FIND THE RIGHT ETF, FAST",
       "bullets": [
@@ -909,7 +909,7 @@ window.DEFAULT_CONTENT = {
       "type": "feature",
       "lang": "en",
       "featureNo": "16",
-      "eyebrow": "FEATURE 16 · ANALYST RATINGS",
+      "eyebrow": "FEATURE · ANALYST RATINGS",
       "title": "Analyst Ratings",
       "subtitle": "STREET RATINGS & PRICE TARGETS",
       "bullets": [
@@ -932,7 +932,7 @@ window.DEFAULT_CONTENT = {
       "type": "feature",
       "lang": "en",
       "featureNo": "17",
-      "eyebrow": "FEATURE 17 · MORNINGSTAR",
+      "eyebrow": "FEATURE · MORNINGSTAR",
       "title": "Morningstar Research",
       "subtitle": "INDEPENDENT THIRD-PARTY RESEARCH",
       "bullets": [

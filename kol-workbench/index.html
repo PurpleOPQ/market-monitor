@@ -264,7 +264,7 @@
   </div>
 
   <div class="toolbar">
-    <div class="brand"><b>moomoo</b> 植入内容工作台<small>选择页面 · 编辑内容 · 导出 PDF　·　<span style="color:var(--orange)">build 2026-07-06 · English version</span></small></div>
+    <div class="brand"><b>moomoo</b> 植入内容工作台<small>选择页面 · 编辑内容 · 导出 PDF　·　<span style="color:var(--orange)">build 2026-07-06b · 全部套餐+去编号</span></small></div>
     <div class="spacer"></div>
     <span class="count-pill">已选 Selected <b id="selCount">0</b> / <span id="totalCount">0</span></span>
     <button class="btn ghost editor-only" id="btnEdit">✏️ 编辑模式 Edit</button>
@@ -282,11 +282,13 @@
     <button class="preset-btn" data-preset="1">基本面</button>
     <button class="preset-btn" data-preset="2">技术面</button>
     <button class="preset-btn" data-preset="3">期权</button>
+    <button class="preset-btn" data-preset="4">全部</button>
     <span class="presets-sep">EN</span>
-    <button class="preset-btn" data-preset="4">ETF</button>
-    <button class="preset-btn" data-preset="5">Fundamentals</button>
-    <button class="preset-btn" data-preset="6">Technicals</button>
-    <button class="preset-btn" data-preset="7">Options</button>
+    <button class="preset-btn" data-preset="5">ETF</button>
+    <button class="preset-btn" data-preset="6">Fundamentals</button>
+    <button class="preset-btn" data-preset="7">Technicals</button>
+    <button class="preset-btn" data-preset="8">Options</button>
+    <button class="preset-btn" data-preset="9">All</button>
     <span class="presets-hint">点一下 = 自动选「封面 + 对应功能页」并导出 PDF · One click selects the cover + matching pages and opens the PDF export</span>
   </div>
 
@@ -390,7 +392,7 @@ function renderSidebar(){
     const row = document.createElement('div');
     row.className = 'row' + (selected.has(p.id)?' sel':'');
     row.draggable = true; row.dataset.idx = i;
-    const typeBase = p.type==='cover'?'封面 Cover':p.type==='index'?'场景索引 Index':('功能页 Feature '+(p.featureNo||''));
+    const typeBase = p.type==='cover'?'封面 Cover':p.type==='index'?'场景索引 Index':'功能页 Feature';
     const typeLabel = typeBase + (p.lang==='en'?' · EN':'');
     row.innerHTML = `
       <span class="grip">⋮⋮</span>
@@ -475,8 +477,8 @@ function renderIndex(p, idx){
 
 function renderFeature(p, idx){
   const en = p.lang==='en';
-  const crumb = en ? `CORE FEATURES · ${esc(p.featureNo||'')} · ${esc(p.title)}`
-                   : `核心功能 · ${esc(p.featureNo||'')} / 08 · ${esc(p.title)}`;
+  const crumb = en ? `CORE FEATURES · ${esc(p.title)}`
+                   : `核心功能 · ${esc(p.title)}`;
   const bullets = (p.bullets||[]).map((b,bi)=>`<li><span class="dot"></span><span ${ed(`pages.${idx}.bullets.${bi}`)} style="flex:1">${esc(b)}</span><span class="x-btn li-del" data-arr="pages.${idx}.bullets" data-i="${bi}">×</span></li>`).join('');
   const tags = (p.scenarioTags||[]).map((t,ti)=>`<span class="tag"><span ${ed(`pages.${idx}.scenarioTags.${ti}`)}>${esc(t)}</span><span class="x-btn" data-arr="pages.${idx}.scenarioTags" data-i="${ti}">×</span></span>`).join('');
   // EN pages reuse the CN page's screenshot via imageFrom (avoids duplicating big base64)
@@ -673,7 +675,7 @@ document.getElementById('btnAdd').addEventListener('click', ()=>{
   const id = 'feature-' + Date.now();
   const n = String(content.pages.filter(p=>p.type==='feature').length+1).padStart(2,'0');
   content.pages.push({
-    id, type:'feature', featureNo:n, eyebrow:`FEATURE ${n} · NEW FEATURE`,
+    id, type:'feature', featureNo:n, eyebrow:'FEATURE · NEW FEATURE',
     title:'新功能', subtitle:'NEW FEATURE', bullets:['第一条卖点…','第二条卖点…'],
     scenarioTags:['适用场景'], image:'', video:''
   });
@@ -701,10 +703,12 @@ const PRESETS = [
   { name:'基本面', titles:['0换汇费','基本面分析','分析师评级','晨星研究','财报站','新闻','热力图','主题板块','AI总结'] },
   { name:'技术面', titles:['0换汇费','聪明钱','新闻','AI总结'] },
   { name:'期权',   titles:['0换汇费','期权向导','期权链'] },
+  { name:'全部',   all:'cn' },
   { name:'ETF (EN)',          coverId:'en-cover', titles:['$0 Currency Conversion Fee','ETF Comparison','ETF Screener'] },
   { name:'Fundamentals (EN)', coverId:'en-cover', titles:['$0 Currency Conversion Fee','Fundamental Analysis','Analyst Ratings','Morningstar Research','Earnings Hub','News','Heat Map','Thematic Sectors','AI Summary'] },
   { name:'Technicals (EN)',   coverId:'en-cover', titles:['$0 Currency Conversion Fee','Smart Money','News','AI Summary'] },
   { name:'Options (EN)',      coverId:'en-cover', titles:['$0 Currency Conversion Fee','Options Wizard','Options Chain'] },
+  { name:'All (EN)', all:'en' },
 ];
 function normT(s){ return (s||'').replace(/\s+/g,'').toLowerCase(); }
 function matchFeature(title){
@@ -716,6 +720,15 @@ function matchFeature(title){
 }
 function applyPreset(i){
   const pr = PRESETS[i];
+  if(pr.all){
+    const want = p => pr.all==='en' ? p.lang==='en' : p.lang!=='en';
+    selected = new Set(content.pages.filter(want).map(p=>p.id));
+    persistSel(); render();
+    document.querySelector('.canvas-wrap').scrollTop = 0;
+    showBanner('已选全部'+(pr.all==='en'?'英文页 All English pages':'中文页 All Chinese pages')+'（'+selected.size+'），正在打开导出 Opening PDF export…', true);
+    setTimeout(()=>{ markPrintLast(); window.print(); }, 250);
+    return;
+  }
   const ids = [], missing = [];
   pr.titles.forEach(t=>{ const p = matchFeature(t); if(p){ if(!ids.includes(p.id)) ids.push(p.id); } else missing.push(t); });
   const cover = (pr.coverId && pageById(pr.coverId))
