@@ -726,7 +726,7 @@ window.DEFAULT_CONTENT = {
       "scenarioTags": [
         "IPO buzz",
         "Big Tech deep dives",
-        "Sector deep dives (energy)",
+        "Sector deep dives ",
         "Stablecoins & crypto",
         "The AI bubble debate",
         "13F position changes"
