@@ -587,7 +587,7 @@ window.DEFAULT_CONTENT = {
         "First U.S. trades for Canadians",
         "DCA into U.S. ETFs",
         "Broker fee comparisons",
-        "Long-term investing 101"
+        "Long-term investing "
       ],
       "imageFrom": "feature-1782248359924",
       "video": "https://drive.google.com/file/d/1H5otd4cj8wzpsrCQFtdtrjKY1Mh_sLK4/view?usp=sharing"
