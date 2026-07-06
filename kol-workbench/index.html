@@ -202,6 +202,7 @@
   .preset-btn{appearance:none; border:1px solid var(--orange); background:rgba(255,106,19,.08); color:var(--orange); padding:7px 16px; border-radius:20px; font-size:13px; font-weight:700; cursor:pointer; transition:.15s}
   .preset-btn:hover{background:var(--orange); color:#1a0d00}
   .presets-hint{font-size:11px; color:var(--ink-3); margin-left:6px}
+  .presets-sep{font-size:11px; font-weight:800; color:var(--ink-3); letter-spacing:1px; margin:0 2px 0 10px; padding-left:12px; border-left:1px solid var(--line)}
 
   /* publish result banner */
   .banner{display:none; align-items:flex-start; gap:12px; padding:12px 18px; border-bottom:1px solid var(--line); font-size:13px; white-space:pre-line; line-height:1.55}
@@ -245,10 +246,10 @@
   <div class="gate" id="gate">
     <div class="gate-box">
       <div class="gate-logo"><b>moomoo</b> 植入内容工作台</div>
-      <div class="gate-sub">请输入访问密码</div>
-      <input type="password" id="gatePw" placeholder="密码" autocomplete="off">
-      <button class="btn primary" id="gateBtn" style="width:100%;justify-content:center">进入</button>
-      <div class="gate-err" id="gateErr">密码不正确</div>
+      <div class="gate-sub">请输入访问密码 / Enter access password</div>
+      <input type="password" id="gatePw" placeholder="密码 Password" autocomplete="off">
+      <button class="btn primary" id="gateBtn" style="width:100%;justify-content:center">进入 Enter</button>
+      <div class="gate-err" id="gateErr">密码不正确 / Incorrect password</div>
     </div>
   </div>
 
@@ -263,25 +264,30 @@
   </div>
 
   <div class="toolbar">
-    <div class="brand"><b>moomoo</b> 植入内容工作台<small>选择页面 · 编辑内容 · 导出 PDF　·　<span style="color:var(--orange)">build 2026-06-25b · 图片压缩释放空间</span></small></div>
+    <div class="brand"><b>moomoo</b> 植入内容工作台<small>选择页面 · 编辑内容 · 导出 PDF　·　<span style="color:var(--orange)">build 2026-07-06 · English version</span></small></div>
     <div class="spacer"></div>
-    <span class="count-pill">已选 <b id="selCount">0</b> / <span id="totalCount">0</span> 页</span>
-    <button class="btn ghost editor-only" id="btnEdit">✏️ 编辑模式</button>
-    <button class="btn primary editor-only" id="btnPublish" title="一键提交到仓库，同事刷新即可看到">🚀 保存并发布</button>
-    <button class="btn ghost editor-only" id="btnCompress" title="把所有内嵌大图重新压缩，释放本地空间、减小发布体积">🗜 压缩图片</button>
-    <button class="btn ghost editor-only" id="btnExportJson" title="导出 content.js 文件（备份/手动提交用）">⬇️ 导出内容</button>
-    <button class="btn ghost editor-only" id="btnReset" title="清除本地修改，恢复到仓库已发布版本">↺ 重置</button>
-    <button class="btn primary" id="btnPdf">🖨️ 导出 PDF</button>
-    <span class="mini" id="btnLogout" title="切换登录身份" style="margin-left:4px">退出</span>
+    <span class="count-pill">已选 Selected <b id="selCount">0</b> / <span id="totalCount">0</span></span>
+    <button class="btn ghost editor-only" id="btnEdit">✏️ 编辑模式 Edit</button>
+    <button class="btn primary editor-only" id="btnPublish" title="一键提交到仓库，同事刷新即可看到">🚀 保存并发布 Publish</button>
+    <button class="btn ghost editor-only" id="btnCompress" title="把所有内嵌大图重新压缩，释放本地空间、减小发布体积">🗜 压缩图片 Compress</button>
+    <button class="btn ghost editor-only" id="btnExportJson" title="导出 content.js 文件（备份/手动提交用）">⬇️ 导出内容 Export</button>
+    <button class="btn ghost editor-only" id="btnReset" title="清除本地修改，恢复到仓库已发布版本">↺ 重置 Reset</button>
+    <button class="btn primary" id="btnPdf">🖨️ 导出 PDF · Export PDF</button>
+    <span class="mini" id="btnLogout" title="切换登录身份 / Switch account" style="margin-left:4px">退出 Log out</span>
   </div>
 
   <div class="presets" id="presets">
-    <span class="presets-label">🎁 一键套餐</span>
+    <span class="presets-label">🎁 一键套餐 Bundles</span>
     <button class="preset-btn" data-preset="0">ETF</button>
     <button class="preset-btn" data-preset="1">基本面</button>
     <button class="preset-btn" data-preset="2">技术面</button>
     <button class="preset-btn" data-preset="3">期权</button>
-    <span class="presets-hint">点一下 = 自动选「封面 + 对应功能页」并导出 PDF</span>
+    <span class="presets-sep">EN</span>
+    <button class="preset-btn" data-preset="4">ETF</button>
+    <button class="preset-btn" data-preset="5">Fundamentals</button>
+    <button class="preset-btn" data-preset="6">Technicals</button>
+    <button class="preset-btn" data-preset="7">Options</button>
+    <span class="presets-hint">点一下 = 自动选「封面 + 对应功能页」并导出 PDF · One click selects the cover + matching pages and opens the PDF export</span>
   </div>
 
   <div class="banner" id="banner"><span id="bannerMsg"></span><span id="bannerX">×</span></div>
@@ -290,11 +296,11 @@
     <aside class="sidebar">
       <div class="sidebar-head">
         <h3>页面 / Pages</h3>
-        <span><span class="mini" id="selAll">全选</span> · <span class="mini" id="selNone">全不选</span></span>
+        <span><span class="mini" id="selAll">全选 All</span> · <span class="mini" id="selNone">全不选 None</span></span>
       </div>
       <div class="page-list" id="pageList"></div>
       <div style="padding:0 14px 14px" class="editor-only">
-        <button class="btn ghost add-page" id="btnAdd">＋ 新增功能页</button>
+        <button class="btn ghost add-page" id="btnAdd">＋ 新增功能页 New Page</button>
       </div>
     </aside>
 
@@ -334,8 +340,8 @@ function showGate(){
   pw.focus();
 }
 
-const LS_CONTENT = 'moomoo_wb_content_v1';
-const LS_SELECT  = 'moomoo_wb_select_v1';
+const LS_CONTENT = 'moomoo_wb_content_v2';   // v2: bilingual content (CN + EN pages)
+const LS_SELECT  = 'moomoo_wb_select_v2';
 let content = null;
 let selected = null;        // Set of page ids
 let editing = false;
@@ -384,7 +390,8 @@ function renderSidebar(){
     const row = document.createElement('div');
     row.className = 'row' + (selected.has(p.id)?' sel':'');
     row.draggable = true; row.dataset.idx = i;
-    const typeLabel = p.type==='cover'?'封面':p.type==='index'?'场景索引':('功能页 '+(p.featureNo||''));
+    const typeBase = p.type==='cover'?'封面 Cover':p.type==='index'?'场景索引 Index':('功能页 Feature '+(p.featureNo||''));
+    const typeLabel = typeBase + (p.lang==='en'?' · EN':'');
     row.innerHTML = `
       <span class="grip">⋮⋮</span>
       <input type="checkbox" ${selected.has(p.id)?'checked':''}>
@@ -467,10 +474,15 @@ function renderIndex(p, idx){
 }
 
 function renderFeature(p, idx){
-  const crumb = `核心功能 · ${esc(p.featureNo||'')} / 08 · ${esc(p.title)}`;
+  const en = p.lang==='en';
+  const crumb = en ? `CORE FEATURES · ${esc(p.featureNo||'')} · ${esc(p.title)}`
+                   : `核心功能 · ${esc(p.featureNo||'')} / 08 · ${esc(p.title)}`;
   const bullets = (p.bullets||[]).map((b,bi)=>`<li><span class="dot"></span><span ${ed(`pages.${idx}.bullets.${bi}`)} style="flex:1">${esc(b)}</span><span class="x-btn li-del" data-arr="pages.${idx}.bullets" data-i="${bi}">×</span></li>`).join('');
   const tags = (p.scenarioTags||[]).map((t,ti)=>`<span class="tag"><span ${ed(`pages.${idx}.scenarioTags.${ti}`)}>${esc(t)}</span><span class="x-btn" data-arr="pages.${idx}.scenarioTags" data-i="${ti}">×</span></span>`).join('');
-  const img = p.image && p.image.trim() ? esc(p.image) : '';
+  // EN pages reuse the CN page's screenshot via imageFrom (avoids duplicating big base64)
+  const rawImg = (p.image && p.image.trim()) ? p.image
+               : (p.imageFrom && (pageById(p.imageFrom)||{}).image) || '';
+  const img = rawImg ? esc(rawImg) : '';
   const vid = (p.video||'').trim();
   const hasVideo = /^https?:\/\//i.test(vid);   // only real URLs become clickable links
   const imgInner = img ? `<img src="${img}" alt="">` : `<div class="ph-empty">编辑模式点击上传截图</div>`;
@@ -485,7 +497,7 @@ function renderFeature(p, idx){
       ? `<a class="phone phone-link" href="${esc(vid)}" target="_blank" rel="noopener" title="点击观看视频">${imgInner}</a>`
       : `<div class="phone">${imgInner}</div>`;
     watchBlock = hasVideo
-      ? `<a class="watch" href="${esc(vid)}" target="_blank" rel="noopener"><span class="play">▶</span> 点击观看</a>`
+      ? `<a class="watch" href="${esc(vid)}" target="_blank" rel="noopener"><span class="play">▶</span> ${en?'Watch demo':'点击观看'}</a>`
       : '';
   }
   return `<div class="slide">
@@ -498,7 +510,7 @@ function renderFeature(p, idx){
         <ul>${bullets}</ul>
         <span class="add-inline" data-addarr="pages.${idx}.bullets">＋ 新增卖点</span>
         <div class="divider"></div>
-        <div class="scene-label">适合植入场景</div>
+        <div class="scene-label">${en?'WORKS BEST FOR':'适合植入场景'}</div>
         <div class="scene-tags">${tags}<span class="add-inline" data-addarr="pages.${idx}.scenarioTags" style="padding:3px 9px">＋</span></div>
       </div>
       <div class="col-r">
@@ -520,7 +532,7 @@ function render(){
     else inner = renderFeature(p,idx);
     const isSel = selected.has(p.id);
     return `<div class="slide-frame ${isSel?'':'unsel'}" id="frame-${p.id}">
-      ${isSel?'':'<span class="badge">未选中 · 不会导出</span>'}
+      ${isSel?'':'<span class="badge">未选中 · 不会导出 / Not selected</span>'}
       ${inner}
     </div>`;
   }).join('');
@@ -677,7 +689,7 @@ function setEditing(v){
   editing = v;
   document.body.classList.toggle('editing', v);
   const b = document.getElementById('btnEdit');
-  b.classList.toggle('on', v); b.textContent = v?'✓ 编辑中（点击退出）':'✏️ 编辑模式';
+  b.classList.toggle('on', v); b.textContent = v?'✓ 编辑中（点击退出）Editing':'✏️ 编辑模式 Edit';
   render();
 }
 document.getElementById('btnEdit').addEventListener('click', ()=>setEditing(!editing));
@@ -689,6 +701,10 @@ const PRESETS = [
   { name:'基本面', titles:['0换汇费','基本面分析','分析师评级','晨星研究','财报站','新闻','热力图','主题板块','AI总结'] },
   { name:'技术面', titles:['0换汇费','聪明钱','新闻','AI总结'] },
   { name:'期权',   titles:['0换汇费','期权向导','期权链'] },
+  { name:'ETF (EN)',          coverId:'en-cover', titles:['$0 Currency Conversion Fee','ETF Comparison','ETF Screener'] },
+  { name:'Fundamentals (EN)', coverId:'en-cover', titles:['$0 Currency Conversion Fee','Fundamental Analysis','Analyst Ratings','Morningstar Research','Earnings Hub','News','Heat Map','Thematic Sectors','AI Summary'] },
+  { name:'Technicals (EN)',   coverId:'en-cover', titles:['$0 Currency Conversion Fee','Smart Money','News','AI Summary'] },
+  { name:'Options (EN)',      coverId:'en-cover', titles:['$0 Currency Conversion Fee','Options Wizard','Options Chain'] },
 ];
 function normT(s){ return (s||'').replace(/\s+/g,'').toLowerCase(); }
 function matchFeature(title){
@@ -702,13 +718,15 @@ function applyPreset(i){
   const pr = PRESETS[i];
   const ids = [], missing = [];
   pr.titles.forEach(t=>{ const p = matchFeature(t); if(p){ if(!ids.includes(p.id)) ids.push(p.id); } else missing.push(t); });
-  const cover = content.pages.find(p=>p.type==='cover');
+  const cover = (pr.coverId && pageById(pr.coverId))
+             || content.pages.find(p=>p.type==='cover' && p.lang!=='en')
+             || content.pages.find(p=>p.type==='cover');
   selected = new Set([...(cover?[cover.id]:[]), ...ids]);
   persistSel(); render();
   document.querySelector('.canvas-wrap').scrollTop = 0;
-  let msg = '已选「'+pr.name+'」套餐：封面 + '+ids.length+' 个功能页';
-  if(missing.length) msg += '\n（这些页还没建，已跳过：'+missing.join('、')+'）';
-  showBanner(msg+'，正在打开导出 PDF…', true);
+  let msg = '已选「'+pr.name+'」套餐：封面 Cover + '+ids.length+' pages';
+  if(missing.length) msg += '\n（这些页还没建，已跳过 Skipped missing pages：'+missing.join('、')+'）';
+  showBanner(msg+'，正在打开导出 Opening PDF export…', true);
   setTimeout(()=>{ markPrintLast(); window.print(); }, 250);
 }
 document.querySelectorAll('.preset-btn').forEach(b=> b.addEventListener('click', ()=>applyPreset(+b.dataset.preset)));
