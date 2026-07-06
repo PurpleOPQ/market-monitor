@@ -490,7 +490,7 @@ window.DEFAULT_CONTENT = {
         {
           "num": "01",
           "title": "IPO Buzz",
-          "desc": "Angle in from the supply chain and beneficiary stocks to see which public companies could ride the commercial space boom.",
+          "desc": "Angle in from the supply chain and beneficiary stocks to see which public companies could ride the boom.",
           "tags": [
             "AI Summary",
             "News",
