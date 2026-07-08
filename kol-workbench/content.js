@@ -312,9 +312,9 @@ window.DEFAULT_CONTENT = {
       "id": "feature-1782248386590",
       "type": "feature",
       "featureNo": "10",
-      "eyebrow": "FEATURE · NEW FEATURE",
+      "eyebrow": "FEATURE · ETF COMPARISON",
       "title": "ETF对比",
-      "subtitle": "NEW FEATURE",
+      "subtitle": "ETF COMPARISION",
       "bullets": [
         "支持快速对比不同 ETF 的持仓、费用率、历史表现",
         "帮助用户看清类似 ETF 之间的核心差异，例如 QQQ vs VOO、VTI vs VFV",
@@ -333,9 +333,9 @@ window.DEFAULT_CONTENT = {
       "id": "feature-1782324283054",
       "type": "feature",
       "featureNo": "11",
-      "eyebrow": "FEATURE · NEW FEATURE",
+      "eyebrow": "FEATURE · MOOMOO AI",
       "title": "moomoo AI",
-      "subtitle": "NEW FEATURE",
+      "subtitle": "MOOMOO AI",
       "bullets": [
         "你的7x24h投资助手，随时随地解答投资疑问",
         "整合 Reuters、Bloomberg、WSJ等权威财经新闻源，信息更可靠",
@@ -354,9 +354,9 @@ window.DEFAULT_CONTENT = {
       "id": "feature-1782324291737",
       "type": "feature",
       "featureNo": "12",
-      "eyebrow": "FEATURE · NEW FEATURE",
+      "eyebrow": "FEATURE · EARNINGS HUB",
       "title": "财报站",
-      "subtitle": "NEW FEATURE",
+      "subtitle": "EARNINGS HUB",
       "bullets": [
         "一站式查看/订阅公司财报时间、业绩数据、市场预期和财报后股价表现",
         "AI总结帮助用户快速看懂财报重点，以及分析师的观点、市场情绪",
@@ -375,9 +375,9 @@ window.DEFAULT_CONTENT = {
       "id": "feature-1782324303270",
       "type": "feature",
       "featureNo": "13",
-      "eyebrow": "FEATURE · NEW FEATURE",
+      "eyebrow": "FEATURE · OPTION STRETAGY",
       "title": "期权向导",
-      "subtitle": "NEW FEATURE",
+      "subtitle": "OPTION STRETAGY",
       "bullets": [
         "通过更直观的方式帮助用户理解不同期权策略，不用一开始就面对复杂的期权链",
         "可以根据用户对行情的判断，辅助展示可能适合的期权策略方向",
@@ -394,9 +394,9 @@ window.DEFAULT_CONTENT = {
       "id": "feature-1782324322487",
       "type": "feature",
       "featureNo": "14",
-      "eyebrow": "FEATURE · NEW FEATURE",
+      "eyebrow": "FEATURE · OPTION CHAIN",
       "title": "期权链",
-      "subtitle": "NEW FEATURE",
+      "subtitle": "OPTION CHAIN",
       "bullets": [
         "集中展示不同到期日、行权价、看涨 / 看跌期权的报价信息",
         "帮助用户快速查看成交量、未平仓量、隐含波动率等关键期权数据"
@@ -412,9 +412,9 @@ window.DEFAULT_CONTENT = {
       "id": "feature-1782324356906",
       "type": "feature",
       "featureNo": "15",
-      "eyebrow": "FEATURE · NEW FEATURE",
+      "eyebrow": "FEATURE · ETF SCREENER",
       "title": "ETF筛选",
-      "subtitle": "NEW FEATURE",
+      "subtitle": "ETF SCREENER",
       "bullets": [
         "帮助用户按照资产类别、地区、行业主题、费用率等条件筛选 ETF",
         "搭配 ETF 对比功能，可以先筛选，再进一步比较费用、持仓和历史表现"
@@ -431,7 +431,7 @@ window.DEFAULT_CONTENT = {
       "id": "feature-1782421732570",
       "type": "feature",
       "featureNo": "16",
-      "eyebrow": "FEATURE · NEW FEATURE",
+      "eyebrow": "FEATURE · ANAYST RATINGS",
       "title": "分析师评级",
       "subtitle": "ANALYST ratings",
       "bullets": [
